@@ -32,29 +32,9 @@ docker build -t aicodewith-test ./test
 docker run -d --name cc-test aicodewith-test sleep 3600
 ```
 
-### 2. 写入配置（模拟 SKILL.md 步骤）
+### 2. 写入配置
 
-```bash
-# 创建目录
-docker exec cc-test mkdir -p /root/.claude
-
-# 写入 settings.json
-docker exec cc-test bash -c 'cat > /root/.claude/settings.json << EOF
-{
-  "env": {
-    "ANTHROPIC_API_KEY": "<你的KEY>",
-    "ANTHROPIC_BASE_URL": "https://api.aicodewith.com"
-  }
-}
-EOF'
-
-# 写入 .claude.json
-docker exec cc-test bash -c 'cat > /root/.claude.json << EOF
-{
-  "hasCompletedOnboarding": true
-}
-EOF'
-```
+按照 `skills/setup/SKILL.md` 中 **Claude Code** 部分的步骤，在容器内执行配置（通过 `docker exec` 写入文件）。
 
 ### 3. 验证配置文件
 

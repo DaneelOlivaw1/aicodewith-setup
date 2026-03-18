@@ -29,21 +29,9 @@ docker exec codex-test bash -c 'cd /tmp && git init test-repo'
 
 ### 4. 写入配置
 
-```bash
-docker exec codex-test mkdir -p /root/.codex
-docker exec codex-test bash -c 'cat > /root/.codex/config.toml << EOF
-model = "gpt-5.3-codex"
-openai_base_url = "https://api.aicodewith.com/v1"
-EOF'
-```
+按照 `skills/setup/SKILL.md` 中 **Codex CLI** 部分的步骤，在容器内执行配置（通过 `docker exec` 写入文件并登录）。
 
-### 5. 登录存储 API Key
-
-```bash
-docker exec codex-test bash -c 'echo "<你的KEY>" | codex login --with-api-key'
-```
-
-### 6. 测试连通性
+### 5. 测试连通性
 
 ```bash
 docker exec codex-test bash -c 'cd /tmp/test-repo && codex exec "say hi"'
@@ -51,7 +39,7 @@ docker exec codex-test bash -c 'cd /tmp/test-repo && codex exec "say hi"'
 
 预期：返回正常文本响应（如 "hi"）。
 
-### 7. 清理
+### 6. 清理
 
 ```bash
 docker stop codex-test && docker rm codex-test
