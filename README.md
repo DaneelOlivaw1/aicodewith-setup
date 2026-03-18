@@ -4,15 +4,15 @@
 
 ## 支持的工具
 
-| 工具 | 配置方式 |
-|------|----------|
-| Claude Code | 自动写入配置文件 |
-| Codex CLI | 自动写入配置文件 |
-| Gemini CLI | 自动写入配置文件 |
-| OpenCode | 插件安装 + 认证 |
-| OpenClaw | 插件安装 + 认证 |
+| 工具 | 配置方式 | 官方文档 |
+|------|----------|----------|
+| Claude Code | 环境变量 → settings.json | [env-vars](https://code.claude.com/docs/en/env-vars) |
+| Codex CLI | 自定义 provider → config.yaml | [codex-cli](https://github.com/openai/codex/tree/main/codex-cli) |
+| Gemini CLI | 环境变量 → .env | [gemini-cli](https://github.com/google-gemini/gemini-cli) |
+| OpenCode | 认证插件 | [opencode](https://github.com/opencode-ai/opencode) |
+| OpenClaw | 认证插件 | [openclaw](https://github.com/openclaw/openclaw) |
 
-## 安装方法
+## 安装
 
 在 Claude Code 中执行：
 
@@ -21,30 +21,29 @@
 /plugin install aicodewith-setup@DaneelOlivaw1-aicodewith-setup
 ```
 
-## 使用方法
+## 使用
 
-安装后，直接对 Claude Code 说：
+安装后，直接说：
 
-- "帮我配置 Claude Code 连接 AICodeWith"
+- "帮我配置 Claude Code"
 - "配置 Gemini CLI"
 - "把所有工具都配置好"
-- `/aicodewith-setup:setup`
 
-Claude 会自动引导你完成配置，只需提供你的 API Key。
+或直接调用 `/aicodewith-setup:setup`
 
-## API Key 获取
+## API Key
 
 登录 [AICodeWith](https://api.aicodewith.com) → 密钥管理 → 创建密钥
 
-## 线路选择
+## 线路
 
 | 线路 | 地址 | 说明 |
 |------|------|------|
 | 主线路 | `https://api.aicodewith.com` | 推荐，经 Cloudflare |
 | 备用线路 | `https://api.with7.cn` | 国内直连 |
 
+两条线路共享 API Key 和数据，可随时切换。
+
 ## 工作原理
 
-Skill 直接从 https://docs.aicodewith.com 实时拉取配置信息，无需维护本地配置文件。
-
-当你更新网站文档时，Skill 自动获取最新配置方法和模型列表。
+Skill 内置了各工具的配置方法（基于各工具官方文档），不依赖外部服务。配置方法变更时更新 SKILL.md 即可。
