@@ -110,7 +110,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 ## OpenCode
 
 > 官方文档: https://opencode.ai/docs/providers/
-> OpenCode 支持通过 `provider` 配置添加任意 OpenAI 兼容 API，使用 `@ai-sdk/openai-compatible` 包。
+> OpenCode 通过 `provider` 配置添加自定义 API 提供商。使用 `@ai-sdk/openai` 包（支持 OpenAI Responses API 格式）。
 
 **前提**: Node.js 18+
 
@@ -118,23 +118,22 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 1. 安装（如未安装）: `npm i -g opencode-ai`
 2. 运行 `opencode` 一次初始化配置目录
-3. 运行 `/connect`，选择 "Other"，输入 provider ID（如 `aicodewith`），输入 API Key
-4. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），添加 provider：
+3. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），添加 provider：
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
     "aicodewith": {
-      "npm": "@ai-sdk/openai-compatible",
+      "npm": "@ai-sdk/openai",
       "name": "AICodeWith",
       "options": {
         "baseURL": "<BASE_URL>/v1",
-        "apiKey": "{env:AICODEWITH_API_KEY}"
+        "apiKey": "<用户的KEY>"
       },
       "models": {
-        "claude-sonnet-4": {
-          "name": "Claude Sonnet 4",
+        "<模型名>": {
+          "name": "<模型显示名>",
           "limit": { "context": 200000, "output": 65536 }
         }
       }
@@ -143,9 +142,9 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 }
 ```
 
-5. 模型名称和列表根据用户实际需求调整
+4. 模型名称和列表根据用户实际需求调整。注意：必须使用 `@ai-sdk/openai`（Responses API 格式），不要用 `@ai-sdk/openai-compatible`（Chat Completions 格式已废弃）
 
-**测试**: 提示用户运行 `opencode` 并发送测试消息
+**测试**: `opencode run -m "aicodewith/<模型名>" "say hi"`
 
 ---
 
