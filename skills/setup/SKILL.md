@@ -54,31 +54,28 @@ argument-hint: [工具名称]
 ## Codex CLI
 
 > 官方文档: https://github.com/openai/codex/tree/main/codex-cli
-> Codex 支持任何 OpenAI 兼容 API，通过 provider 配置自定义 baseURL 和 envKey。
+> Codex 通过 `config.toml` 配置自定义 API 端点，通过 `codex login --with-api-key` 存储凭证。
+
+**前提**: Node.js 18+，需在 git 仓库内运行
 
 **步骤**：
 
-1. `mkdir -p ~/.codex`
-2. 写入 `~/.codex/config.yaml`：
+1. 安装（如未安装）: `npm install -g @openai/codex`
+2. `mkdir -p ~/.codex`
+3. 写入 `~/.codex/config.toml`：
 
-```yaml
-model: <用户选择的模型，默认 gpt-5.3-codex>
-provider: aicodewith
-
-providers:
-  aicodewith:
-    name: "AICodeWith"
-    baseURL: "<BASE_URL>/chatgpt/v1"
-    envKey: "AICODEWITH_API_KEY"
+```toml
+model = "<用户选择的模型，默认 gpt-5.3-codex>"
+openai_base_url = "<BASE_URL>/v1"
 ```
 
-3. 设置环境变量（写入 shell profile 或 `.env`）：
+4. 登录存储 API Key（必须通过此方式，环境变量 OPENAI_API_KEY 不生效）：
 
 ```bash
-export AICODEWITH_API_KEY="<用户的KEY>"
+echo "<用户的KEY>" | codex login --with-api-key
 ```
 
-**测试**: `codex "say hi"`
+**测试**: 在 git 仓库目录下运行 `codex exec "say hi"`
 
 ---
 
