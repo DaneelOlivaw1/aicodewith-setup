@@ -17,8 +17,8 @@
 在 Claude Code 中执行：
 
 ```
-/plugin marketplace add <你的GitHub用户名>/install_skills
-/plugin install aicodewith-setup@<你的GitHub用户名>-install_skills
+/plugin marketplace add DaneelOlivaw1/aicodewith-setup
+/plugin install aicodewith-setup@DaneelOlivaw1-aicodewith-setup
 ```
 
 ## 使用方法
@@ -43,6 +43,8 @@ Claude 会自动引导你完成配置，只需提供你的 API Key。
 | 主线路 | `https://api.aicodewith.com` | 推荐，经 Cloudflare |
 | 备用线路 | `https://api.with7.cn` | 国内直连 |
 
-## 维护者说明
+## 工作原理
 
-当模型列表变更时，只需更新 `models.json` 文件（或 API 端点 `https://api.aicodewith.com/models.json` 返回的内容）。Skill 逻辑无需修改。
+Skill 直接从 https://docs.aicodewith.com 实时拉取配置信息，无需维护本地配置文件。
+
+当你更新网站文档时，Skill 自动获取最新配置方法和模型列表。
