@@ -112,8 +112,8 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 ## OpenCode
 
-> 官方文档: https://github.com/opencode-ai/opencode
-> OpenCode 通过插件体系扩展 provider 支持。AICodeWith 提供认证插件 `opencode-aicodewith-auth`。
+> 官方文档: https://opencode.ai/docs/providers/
+> OpenCode 支持通过 `provider` 配置添加任意 OpenAI 兼容 API，使用 `@ai-sdk/openai-compatible` 包。
 
 **前提**: Node.js 18+
 
@@ -121,19 +121,32 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 1. 安装（如未安装）: `npm i -g opencode-ai`
 2. 运行 `opencode` 一次初始化配置目录
-3. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），确保 plugin 包含：
+3. 运行 `/connect`，选择 "Other"，输入 provider ID（如 `aicodewith`），输入 API Key
+4. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），添加 provider：
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "oh-my-opencode",
-    "opencode-aicodewith-auth"
-  ]
+  "provider": {
+    "aicodewith": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "AICodeWith",
+      "options": {
+        "baseURL": "<BASE_URL>/v1",
+        "apiKey": "{env:AICODEWITH_API_KEY}"
+      },
+      "models": {
+        "claude-sonnet-4": {
+          "name": "Claude Sonnet 4",
+          "limit": { "context": 200000, "output": 65536 }
+        }
+      }
+    }
+  }
 }
 ```
 
-4. 提示用户手动运行: `opencode auth login`，输入 API Key
+5. 模型名称和列表根据用户实际需求调整
 
 **测试**: 提示用户运行 `opencode` 并发送测试消息
 
@@ -141,17 +154,44 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 ## OpenClaw
 
-> 官方文档: https://github.com/openclaw/openclaw
-> OpenClaw 通过插件体系管理 model provider。AICodeWith 提供认证插件 `openclaw-aicodewith-auth`。
+> 官方文档: https://docs.openclaw.ai/gateway/configuration-reference
+> OpenClaw 通过 `models.providers` 配置自定义 provider，支持 `openai-completions`、`anthropic-messages` 等适配器。
 
 **前提**: Node.js 18+
 
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 安装认证插件: `openclaw plugins install openclaw-aicodewith-auth`
-3. 启用插件: `openclaw plugins enable openclaw-aicodewith-auth`
-4. 提示用户手动运行: `openclaw models auth login --provider aicodewith-claude --set-default`，输入 API Key
+2. 运行 `openclaw onboard --install-daemon` 完成初始化
+3. 编辑配置文件，在 `models.providers` 中添加自定义 provider：
+
+```json5
+{
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "aicodewith": {
+        "baseUrl": "<BASE_URL>",
+        "apiKey": "<用户的KEY>",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "claude-sonnet-4",
+            "name": "Claude Sonnet 4",
+            "reasoning": false,
+            "input": ["text"],
+            "contextWindow": 200000,
+            "maxTokens": 65536
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+4. 设置默认模型: `openclaw models set aicodewith/claude-sonnet-4`
+5. 模型名称、api 适配器和列表根据用户实际需求调整（如用 OpenAI 兼容接口则 api 改为 `openai-completions`，baseUrl 加 `/v1`）
 
 **测试**: 提示用户运行 `openclaw` 并发送测试消息
 

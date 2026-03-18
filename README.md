@@ -9,8 +9,8 @@
 | Claude Code | 环境变量 → settings.json | [env-vars](https://code.claude.com/docs/en/env-vars) |
 | Codex CLI | 自定义 provider → config.yaml | [codex-cli](https://github.com/openai/codex/tree/main/codex-cli) |
 | Gemini CLI | 环境变量 → .env | [gemini-cli](https://github.com/google-gemini/gemini-cli) |
-| OpenCode | 认证插件 | [opencode](https://github.com/opencode-ai/opencode) |
-| OpenClaw | 认证插件 | [openclaw](https://github.com/openclaw/openclaw) |
+| OpenCode | 自定义 provider → opencode.json | [providers](https://opencode.ai/docs/providers/) |
+| OpenClaw | 自定义 provider → models.providers | [configuration-reference](https://docs.openclaw.ai/gateway/configuration-reference) |
 
 ## 安装
 
