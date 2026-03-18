@@ -151,29 +151,28 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 ## OpenClaw
 
 > 官方文档: https://docs.openclaw.ai/gateway/configuration-reference
-> OpenClaw 通过 `models.providers` 配置自定义 provider，支持 `openai-completions`、`anthropic-messages` 等适配器。
+> OpenClaw 通过 `models.providers` 配置自定义 provider，支持 `openai-responses`、`openai-completions`、`anthropic-messages` 等适配器。
 
-**前提**: Node.js 18+
+**前提**: Node.js 18+，需要 git
 
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 运行 `openclaw onboard --install-daemon` 完成初始化
-3. 编辑配置文件，在 `models.providers` 中添加自定义 provider：
+2. 编辑配置文件 `~/.openclaw/openclaw.json`，在 `models.providers` 中添加自定义 provider：
 
-```json5
+```json
 {
   "models": {
     "mode": "merge",
     "providers": {
       "aicodewith": {
-        "baseUrl": "<BASE_URL>",
+        "baseUrl": "<BASE_URL>/v1",
         "apiKey": "<用户的KEY>",
-        "api": "anthropic-messages",
+        "api": "openai-responses",
         "models": [
           {
-            "id": "claude-sonnet-4",
-            "name": "Claude Sonnet 4",
+            "id": "<模型名>",
+            "name": "<模型显示名>",
             "reasoning": false,
             "input": ["text"],
             "contextWindow": 200000,
@@ -186,10 +185,10 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 }
 ```
 
-4. 设置默认模型: `openclaw models set aicodewith/claude-sonnet-4`
-5. 模型名称、api 适配器和列表根据用户实际需求调整（如用 OpenAI 兼容接口则 api 改为 `openai-completions`，baseUrl 加 `/v1`）
+3. 设置默认模型: `openclaw models set aicodewith/<模型名>`
+4. 模型名称、api 适配器和列表根据用户实际需求调整
 
-**测试**: 提示用户运行 `openclaw` 并发送测试消息
+**测试**: `openclaw agent --local --to "+10000000000" -m "say hi" --json`
 
 ---
 
