@@ -20,11 +20,28 @@ argument-hint: [工具名称]
 
 1. 确认用户要配置哪个工具（可多选或全部）
 2. 收集 API Key 和线路偏好（默认主线路）
-3. 获取模型列表：用 Bash 执行 `curl -s -H "Authorization: Bearer <用户的KEY>" <BASE_URL>/v1/models`，解析返回的 JSON，提取所有可用模型。按模型 ID 前缀分类：
-   - `claude-` 开头 → Claude 类型
-   - `gpt-` / `o1-` / `o3-` / `o4-` 开头 → OpenAI 类型
-   - `gemini-` 开头 → Gemini 类型
-4. 按下方对应工具的方法执行配置，将所有支持的模型全部写入配置
+3. 获取模型列表：用 Bash 执行 `curl -s <BASE_URL>/models`（无需认证），解析返回的 JSON。响应格式：
+   ```json
+   {
+     "data": [
+       {
+         "id": "claude-sonnet-4-6",
+         "name": "Sonnet 4.6",
+         "provider": "anthropic",
+         "context_window": 200000,
+         "max_output_tokens": 128000,
+         "supports_reasoning": true,
+         "input_modalities": ["text"]
+       }
+     ]
+   }
+   ```
+   按 `provider` 字段分类：
+   - `anthropic` → Claude 类型
+   - `openai` → OpenAI 类型
+   - `gemini` → Gemini 类型
+   - 其他 provider（`deepseek`、`glm`、`kimi`、`qwen`、`minimax`、`step`）→ 归入 OpenAI 类型（走 OpenAI 兼容接口）
+4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`input_modalities` 填充配置，不要硬编码
 5. 必须测试验证
 
 ---
@@ -50,7 +67,7 @@ argument-hint: [工具名称]
 }
 ```
 
-3. 将从模型列表中获取的所有 Claude 模型（`claude-` 开头）写入 `availableModels` 字段：
+3. 将从模型列表中获取的所有 Claude 模型（`provider` 为 `anthropic`）写入 `availableModels` 字段：
 
 ```json
 {
@@ -140,7 +157,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 1. 安装（如未安装）: `npm i -g opencode-ai`
 2. 运行 `opencode` 一次初始化配置目录
-3. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），按模型类型分组添加多个 provider，将该类型下的所有模型全部写入 models：
+3. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），按模型类型分组添加多个 provider。使用 `/models` 返回的真实值填充 `context` 和 `output`：
 
 ```json
 {
@@ -154,9 +171,9 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<所有 OpenAI 模型，每个一条>": {
-          "name": "<模型显示名>",
-          "limit": { "context": 200000, "output": 65536 }
+        "<模型id>": {
+          "name": "<模型name>",
+          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
         }
       }
     },
@@ -168,9 +185,9 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<所有 Claude 模型，每个一条>": {
-          "name": "<模型显示名>",
-          "limit": { "context": 200000, "output": 65536 }
+        "<模型id>": {
+          "name": "<模型name>",
+          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
         }
       }
     },
@@ -182,9 +199,9 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<所有 Gemini 模型，每个一条>": {
-          "name": "<模型显示名>",
-          "limit": { "context": 200000, "output": 65536 }
+        "<模型id>": {
+          "name": "<模型name>",
+          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
         }
       }
     }
@@ -214,7 +231,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 编辑配置文件 `~/.openclaw/openclaw.json`，按模型类型分组添加多个 provider，将该类型下的所有模型全部写入 models：
+2. 编辑配置文件 `~/.openclaw/openclaw.json`，按模型类型分组添加多个 provider。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
 
 ```json
 {
@@ -227,12 +244,12 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "api": "openai-responses",
         "models": [
           {
-            "id": "<每个 OpenAI 模型一条>",
-            "name": "<模型显示名>",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 65536
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
           }
         ]
       },
@@ -242,12 +259,12 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "api": "anthropic-messages",
         "models": [
           {
-            "id": "<每个 Claude 模型一条>",
-            "name": "<模型显示名>",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 65536
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
           }
         ]
       },
@@ -257,12 +274,12 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "api": "google-generative-ai",
         "models": [
           {
-            "id": "<每个 Gemini 模型一条>",
-            "name": "<模型显示名>",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 65536
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
           }
         ]
       }
