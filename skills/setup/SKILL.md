@@ -20,8 +20,12 @@ argument-hint: [工具名称]
 
 1. 确认用户要配置哪个工具（可多选或全部）
 2. 收集 API Key 和线路偏好（默认主线路）
-3. 按下方对应工具的方法执行配置
-4. 必须测试验证
+3. 获取模型列表：用 Bash 执行 `curl -s -H "Authorization: Bearer <用户的KEY>" <BASE_URL>/v1/models`，解析返回的 JSON，提取所有可用模型。按模型 ID 前缀分类：
+   - `claude-` 开头 → Claude 类型
+   - `gpt-` / `o1-` / `o3-` / `o4-` 开头 → OpenAI 类型
+   - `gemini-` 开头 → Gemini 类型
+4. 按下方对应工具的方法执行配置，将所有支持的模型全部写入配置
+5. 必须测试验证
 
 ---
 
@@ -29,7 +33,7 @@ argument-hint: [工具名称]
 
 > 官方文档: https://code.claude.com/docs/en/env-vars
 
-通过环境变量将请求路由到自定义端点。配置写入 `~/.claude/settings.json` 的 `env` 字段。需要同时设置 `ANTHROPIC_API_KEY` 和 `ANTHROPIC_AUTH_TOKEN`，前者用于非交互模式，后者确保交互模式下跳过登录。
+通过环境变量将请求路由到自定义端点。配置写入 `~/.claude/settings.json` 的 `env` 字段。需要同时设置 `ANTHROPIC_API_KEY` �� `ANTHROPIC_AUTH_TOKEN`，前者用于非交互模式，后者确保交互模式下跳过登录。
 
 **步骤**：
 
@@ -46,7 +50,16 @@ argument-hint: [工具名称]
 }
 ```
 
-3. 确保 `~/.claude.json` 存在且包含 `{"hasCompletedOnboarding": true}`
+3. 将从模型列表中获取的所有 Claude 模型（`claude-` 开头）写入 `availableModels` 字段：
+
+```json
+{
+  "env": { ... },
+  "availableModels": ["claude-sonnet-4-6", "claude-opus-4-6", ...]
+}
+```
+
+4. 确保 `~/.claude.json` 存在且包含 `{"hasCompletedOnboarding": true}`
 
 **测试**: `claude -p "say hi"`
 
@@ -127,21 +140,49 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 1. 安装（如未安装）: `npm i -g opencode-ai`
 2. 运行 `opencode` 一次初始化配置目录
-3. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），添加 provider：
+3. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），按模型类型分组添加多个 provider，将该类型下的所有模型全部写入 models：
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "aicodewith": {
-      "npm": "<根据模型类型选择适配器包>",
-      "name": "AICodeWith",
+    "aicodewith-openai": {
+      "npm": "@ai-sdk/openai",
+      "name": "AICodeWith OpenAI",
       "options": {
-        "baseURL": "<根据适配器选择对应的 baseURL 格式>",
+        "baseURL": "<BASE_URL>/v1",
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<模型名>": {
+        "<所有 OpenAI 模型，每个一条>": {
+          "name": "<模型显示名>",
+          "limit": { "context": 200000, "output": 65536 }
+        }
+      }
+    },
+    "aicodewith-claude": {
+      "npm": "@ai-sdk/anthropic",
+      "name": "AICodeWith Claude",
+      "options": {
+        "baseURL": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>"
+      },
+      "models": {
+        "<所有 Claude 模型，每个一条>": {
+          "name": "<模型显示名>",
+          "limit": { "context": 200000, "output": 65536 }
+        }
+      }
+    },
+    "aicodewith-gemini": {
+      "npm": "@ai-sdk/google",
+      "name": "AICodeWith Gemini",
+      "options": {
+        "baseURL": "<BASE_URL>/gemini_cli/v1beta",
+        "apiKey": "<用户的KEY>"
+      },
+      "models": {
+        "<所有 Gemini 模型，每个一条>": {
           "name": "<模型显示名>",
           "limit": { "context": 200000, "output": 65536 }
         }
@@ -151,9 +192,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 }
 ```
 
-4. 可同时配置多个 provider（如 `aicodewith-openai`、`aicodewith-claude`）
-
-**测试**: `opencode run -m "aicodewith/<模型名>" "say hi"`
+**测试**: `opencode run -m "aicodewith-openai/<模型名>" "say hi"`
 
 ---
 
@@ -175,20 +214,50 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 编辑配置文件 `~/.openclaw/openclaw.json`，在 `models.providers` 中添加自定义 provider：
+2. 编辑配置文件 `~/.openclaw/openclaw.json`，按模型类型分组添加多个 provider，将该类型下的所有模型全部写入 models：
 
 ```json
 {
   "models": {
     "mode": "merge",
     "providers": {
-      "aicodewith": {
+      "aicodewith-openai": {
         "baseUrl": "<BASE_URL>/v1",
         "apiKey": "<用户的KEY>",
         "api": "openai-responses",
         "models": [
           {
-            "id": "<模型名>",
+            "id": "<每个 OpenAI 模型一条>",
+            "name": "<模型显示名>",
+            "reasoning": false,
+            "input": ["text"],
+            "contextWindow": 200000,
+            "maxTokens": 65536
+          }
+        ]
+      },
+      "aicodewith-claude": {
+        "baseUrl": "<BASE_URL>",
+        "apiKey": "<用户的KEY>",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "<每个 Claude 模型一条>",
+            "name": "<模型显示名>",
+            "reasoning": false,
+            "input": ["text"],
+            "contextWindow": 200000,
+            "maxTokens": 65536
+          }
+        ]
+      },
+      "aicodewith-gemini": {
+        "baseUrl": "<BASE_URL>/gemini_cli/v1beta",
+        "apiKey": "<用户的KEY>",
+        "api": "google-generative-ai",
+        "models": [
+          {
+            "id": "<每个 Gemini 模型一条>",
             "name": "<模型显示名>",
             "reasoning": false,
             "input": ["text"],
@@ -202,8 +271,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 }
 ```
 
-3. 设置默认模型: `openclaw models set aicodewith/<模型名>`
-4. 模型名称、api 适配器和列表根据用户实际需求调整
+3. 设置默认模型: `openclaw models set aicodewith-claude/<模型名>`
 
 **测试**: `openclaw agent --local --to "+10000000000" -m "say hi" --json`
 
