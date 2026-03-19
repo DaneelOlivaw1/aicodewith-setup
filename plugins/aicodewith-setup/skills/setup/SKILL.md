@@ -31,16 +31,17 @@ argument-hint: [工具名称]
          "context_window": 200000,
          "max_output_tokens": 128000,
          "supports_reasoning": true,
-         "input_modalities": ["text"]
+         "input_modalities": ["text"],
+         "api_format": "anthropic"
        }
      ]
    }
    ```
-   按 `provider` 字段分类：
-   - `anthropic` → Claude 类型
-   - `openai` → OpenAI 类型
-   - `gemini` → Gemini 类型
-   - 其他 provider（`deepseek`、`glm`、`kimi`、`qwen`、`minimax`、`step`）→ 归入 OpenAI 类型（走 OpenAI 兼容接口）
+   按 `api_format` 字段分组配置：
+   - `anthropic` → Claude 类型（Anthropic Messages API）
+   - `openai-responses` → OpenAI Responses API（GPT 系列）
+   - `openai-completions` → OpenAI Chat Completions（DeepSeek、GLM、Kimi、Qwen 等）
+   - `gemini` → Gemini 类型（Google Generative AI）
 4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`input_modalities` 填充配置，不要硬编码
 5. 必须测试验证
 
@@ -145,13 +146,13 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 **前提**: Node.js 18+
 
-**适配器选择**：
+**适配器选择**（按模型的 `api_format` 字段）：
 
-| 模型类型 | npm 包 | baseURL 格式 |
+| api_format | npm 包 | baseURL 格式 |
 |----------|--------|-------------|
-| OpenAI (GPT) | `@ai-sdk/openai` | `<BASE_URL>/v1` |
-| Claude | `@ai-sdk/anthropic` | `<BASE_URL>/v1` |
-| Gemini | `@ai-sdk/google` | `<BASE_URL>/gemini_cli/v1beta` |
+| `openai-responses` / `openai-completions` | `@ai-sdk/openai` | `<BASE_URL>/v1` |
+| `anthropic` | `@ai-sdk/anthropic` | `<BASE_URL>/v1` |
+| `gemini` | `@ai-sdk/google` | `<BASE_URL>/gemini_cli/v1beta` |
 
 **步骤**：
 
@@ -220,13 +221,14 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 **前提**: Node.js 18+，需要 git
 
-**适配器选择**：
+**适配器选择**（按模型的 `api_format` 字段）：
 
-| 模型类型 | api 值 | baseUrl 格式 |
+| api_format | OpenClaw api 值 | baseUrl 格式 |
 |----------|--------|-------------|
-| OpenAI (GPT) | `openai-responses` | `<BASE_URL>/v1` |
-| Claude | `anthropic-messages` | `<BASE_URL>` (不带 /v1) |
-| Gemini | `google-generative-ai` | `<BASE_URL>/gemini_cli/v1beta` |
+| `openai-responses` | `openai-responses` | `<BASE_URL>/v1` |
+| `openai-completions` | `openai-chat` | `<BASE_URL>/v1` |
+| `anthropic` | `anthropic-messages` | `<BASE_URL>` (不带 /v1) |
+| `gemini` | `google-generative-ai` | `<BASE_URL>/gemini_cli/v1beta` |
 
 **步骤**：
 
