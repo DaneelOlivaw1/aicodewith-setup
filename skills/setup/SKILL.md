@@ -29,7 +29,7 @@ argument-hint: [工具名称]
 
 > 官方文档: https://code.claude.com/docs/en/env-vars
 
-通过环境变量 `ANTHROPIC_API_KEY` 和 `ANTHROPIC_BASE_URL` 将请求路由到自定义端点。配置写入 `~/.claude/settings.json` 的 `env` 字段。
+通过环境变量将请求路由到自定义端点。配置写入 `~/.claude/settings.json` 的 `env` 字段。需要同时设置 `ANTHROPIC_API_KEY` 和 `ANTHROPIC_AUTH_TOKEN`，前者用于非交互模式，后者确保交互模式下跳过登录。
 
 **步骤**：
 
@@ -40,6 +40,7 @@ argument-hint: [工具名称]
 {
   "env": {
     "ANTHROPIC_API_KEY": "<用户的KEY>",
+    "ANTHROPIC_AUTH_TOKEN": "<用户的KEY>",
     "ANTHROPIC_BASE_URL": "<BASE_URL>"
   }
 }
