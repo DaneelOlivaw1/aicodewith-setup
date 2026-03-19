@@ -1,0 +1,13 @@
+{
+  "name": "aicodewith-marketplace",
+  "owner": {
+    "name": "AICodeWith",
+    "url": "https://docs.aicodewith.com"
+  },
+  "plugins": [
+    {
+      "name": "aicodewith-setup",
+      "source": "."
+    }
+  ]
+}
