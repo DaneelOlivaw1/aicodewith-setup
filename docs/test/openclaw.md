@@ -47,7 +47,15 @@ docker stop openclaw-test && docker rm openclaw-test
 | 项目 | 说明 |
 |------|------|
 | 配置路径 | `~/.openclaw/openclaw.json` |
-| api 适配器 | 使用 `openai-responses`（非 `openai-completions`） |
 | 安装依赖 | 需要 git，否则 npm install 会失败 |
 | 非交互测试 | `openclaw agent --local --to <号码> -m <消息> --json` |
 | 配置验证 | `openclaw config validate` 可预检配置格式 |
+| Claude baseUrl | 不带 `/v1`，SDK 自动拼 `/v1/messages` |
+
+## 多适配器测试结果
+
+| 模型类型 | api 适配器 | baseUrl | 结果 |
+|----------|-----------|---------|------|
+| OpenAI (gpt-5.4) | `openai-responses` | `BASE_URL/v1` | 通过 |
+| Claude (claude-sonnet-4-6) | `anthropic-messages` | `BASE_URL` (不带 /v1) | 通过 |
+| Gemini (gemini-3.1-pro-preview) | `google-generative-ai` | `BASE_URL/gemini` | 响应解析错误 - 中转站 streaming 兼容问题 |

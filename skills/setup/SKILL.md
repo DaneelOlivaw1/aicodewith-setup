@@ -110,9 +110,17 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 ## OpenCode
 
 > 官方文档: https://opencode.ai/docs/providers/
-> OpenCode 通过 `provider` 配置添加自定义 API 提供商。使用 `@ai-sdk/openai` 包（支持 OpenAI Responses API 格式）。
+> OpenCode 通过 `provider` 配置添加自定义 API 提供商。不同模型类型使用不同的 npm 适配器包。
 
 **前提**: Node.js 18+
+
+**适配器选择**：
+
+| 模型类型 | npm 包 | baseURL 格式 |
+|----------|--------|-------------|
+| OpenAI (GPT) | `@ai-sdk/openai` | `<BASE_URL>/v1` |
+| Claude | `@ai-sdk/anthropic` | `<BASE_URL>/v1` |
+| Gemini | `@ai-sdk/google` | `<BASE_URL>/gemini` |
 
 **步骤**：
 
@@ -125,10 +133,10 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
   "$schema": "https://opencode.ai/config.json",
   "provider": {
     "aicodewith": {
-      "npm": "@ai-sdk/openai",
+      "npm": "<根据模型类型选择适配器包>",
       "name": "AICodeWith",
       "options": {
-        "baseURL": "<BASE_URL>/v1",
+        "baseURL": "<根据适配器选择对应的 baseURL 格式>",
         "apiKey": "<用户的KEY>"
       },
       "models": {
@@ -142,7 +150,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 }
 ```
 
-4. 模型名称和列表根据用户实际需求调整。注意：必须使用 `@ai-sdk/openai`（Responses API 格式），不要用 `@ai-sdk/openai-compatible`（Chat Completions 格式已废弃）
+4. 可同时配置多个 provider（如 `aicodewith-openai`、`aicodewith-claude`）
 
 **测试**: `opencode run -m "aicodewith/<模型名>" "say hi"`
 
@@ -151,9 +159,17 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 ## OpenClaw
 
 > 官方文档: https://docs.openclaw.ai/gateway/configuration-reference
-> OpenClaw 通过 `models.providers` 配置自定义 provider，支持 `openai-responses`、`openai-completions`、`anthropic-messages` 等适配器。
+> OpenClaw 通过 `models.providers` 配置自定义 provider。不同模型类型使用不同的 api 适配器。
 
 **前提**: Node.js 18+，需要 git
+
+**适配器选择**：
+
+| 模型类型 | api 值 | baseUrl 格式 |
+|----------|--------|-------------|
+| OpenAI (GPT) | `openai-responses` | `<BASE_URL>/v1` |
+| Claude | `anthropic-messages` | `<BASE_URL>` (不带 /v1) |
+| Gemini | `google-generative-ai` | `<BASE_URL>/gemini` |
 
 **步骤**：
 

@@ -37,8 +37,15 @@ docker stop opencode-test && docker rm opencode-test
 
 | 项目 | 说明 |
 |------|------|
-| npm 包 | 必须用 `@ai-sdk/openai`（Responses API），不能用 `@ai-sdk/openai-compatible`（Chat Completions 已废弃） |
 | 配置路径 | `~/.config/opencode/opencode.json` |
 | 模型指定 | `-m "provider/model"` 格式，如 `aicodewith/gpt-5.4` |
 | 非交互模式 | `opencode run` 子命令 |
 | 首次运行 | 会执行数据库迁移，需要额外等待时间 |
+
+## 多适配器测试结果
+
+| 模型类型 | npm 包 | baseURL | 结果 |
+|----------|--------|---------|------|
+| OpenAI (gpt-5.4) | `@ai-sdk/openai` | `BASE_URL/v1` | 通过 |
+| Claude (claude-sonnet-4-6) | `@ai-sdk/anthropic` | `BASE_URL/v1` | 通过（首次较慢） |
+| Gemini (gemini-3.1-pro-preview) | `@ai-sdk/google` | `BASE_URL/gemini` | 503 - 中转站 streaming 兼容问题 |
