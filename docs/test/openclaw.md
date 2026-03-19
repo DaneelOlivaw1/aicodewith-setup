@@ -58,4 +58,4 @@ docker stop openclaw-test && docker rm openclaw-test
 |----------|-----------|---------|------|
 | OpenAI (gpt-5.4) | `openai-responses` | `BASE_URL/v1` | 通过 |
 | Claude (claude-sonnet-4-6) | `anthropic-messages` | `BASE_URL` (不带 /v1) | 通过 |
-| Gemini (gemini-3.1-pro-preview) | `google-generative-ai` | `BASE_URL/gemini` | 响应解析错误 - 中转站 streaming 兼容问题 |
+| Gemini (gemini-3.1-pro-preview) | `google-generative-ai` | `BASE_URL/gemini_cli/v1beta` | 通过 |

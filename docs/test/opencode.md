@@ -48,4 +48,4 @@ docker stop opencode-test && docker rm opencode-test
 |----------|--------|---------|------|
 | OpenAI (gpt-5.4) | `@ai-sdk/openai` | `BASE_URL/v1` | 通过 |
 | Claude (claude-sonnet-4-6) | `@ai-sdk/anthropic` | `BASE_URL/v1` | 通过（首次较慢） |
-| Gemini (gemini-3.1-pro-preview) | `@ai-sdk/google` | `BASE_URL/gemini` | 503 - 中转站 streaming 兼容问题 |
+| Gemini (gemini-3.1-pro-preview) | `@ai-sdk/google` | `BASE_URL/gemini_cli/v1beta` | 通过 |

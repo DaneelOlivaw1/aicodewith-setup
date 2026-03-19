@@ -120,7 +120,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 |----------|--------|-------------|
 | OpenAI (GPT) | `@ai-sdk/openai` | `<BASE_URL>/v1` |
 | Claude | `@ai-sdk/anthropic` | `<BASE_URL>/v1` |
-| Gemini | `@ai-sdk/google` | `<BASE_URL>/gemini` |
+| Gemini | `@ai-sdk/google` | `<BASE_URL>/gemini_cli/v1beta` |
 
 **步骤**：
 
@@ -169,7 +169,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 |----------|--------|-------------|
 | OpenAI (GPT) | `openai-responses` | `<BASE_URL>/v1` |
 | Claude | `anthropic-messages` | `<BASE_URL>` (不带 /v1) |
-| Gemini | `google-generative-ai` | `<BASE_URL>/gemini` |
+| Gemini | `google-generative-ai` | `<BASE_URL>/gemini_cli/v1beta` |
 
 **步骤**：
 
