@@ -21,6 +21,8 @@
 /plugin install aicodewith-setup@DaneelOlivaw1-aicodewith-setup
 ```
 
+前提：系统需要安装 git。
+
 ## 使用
 
 安装后，直接说：
