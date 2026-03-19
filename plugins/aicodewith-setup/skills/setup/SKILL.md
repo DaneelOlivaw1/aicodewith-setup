@@ -20,7 +20,7 @@ argument-hint: [工具名称]
 
 1. 确认用户要配置哪个工具（可多选或全部）
 2. 收集 API Key 和线路偏好（默认主线路）
-3. 获取模型列表：用 Bash 执行 `curl -s <BASE_URL>/models`（无需认证），解析返回的 JSON。响应格式：
+3. 获取模型列表：**必须用 Bash 执行 `curl -s <BASE_URL>/models`**（不要使用 Fetch/WebFetch 工具，会被安全策略拦截），解析返回的 JSON。响应格式：
    ```json
    {
      "data": [
