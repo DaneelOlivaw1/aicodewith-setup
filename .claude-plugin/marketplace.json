@@ -7,10 +7,7 @@
   "plugins": [
     {
       "name": "aicodewith-setup",
-      "source": {
-        "source": "local",
-        "path": "."
-      }
+      "source": "./plugins/aicodewith-setup"
     }
   ]
 }
