@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 配置 AI 编程工具连接 AICodeWith 中转服务。支持 Claude Code、Codex CLI、Gemini CLI、OpenCode、OpenClaw。当用户提到"配置"、"设置"、"安装"、"连接"这些工具，或提到 AICodeWith、aicodewith、中转站时自动使用此 skill。
+description: 配置 AI 编程工具或调用大模型 API 连接 AICodeWith 中转服务。支持 Claude Code、Codex CLI、Gemini CLI、OpenCode、OpenClaw 等编程工具配置，以及通过 Python、JS 等语言直接调用 Claude、GPT、Gemini、DeepSeek 等大模型 API。当用户提到"配置"、"设置"、"连接"这些工具，或想用代码调用 AI、大模型、LLM API 时自动使用此 skill。
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [工具名称]
 ---
