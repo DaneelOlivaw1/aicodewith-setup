@@ -363,7 +363,25 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 > 按 `/models` 接口返回的 `provider` 字段命名各 provider（格式：`aicodewith-<provider值>`）。所有 `openai-completions` 类型的厂商（DeepSeek、Qwen、Kimi、GLM、MiniMax 等）均使用 `<BASE_URL>/v1` + `openai-completions`，只是模型列表不同。
 
-3. 设置默认模型: `openclaw models set aicodewith-claude/<模型名>`
+3. 在 `agents.defaults.model.primary` 字段设置默认模型：
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "aicodewith-claude/<模型名>"
+      },
+      "models": {
+        "aicodewith-claude/<模型名>": {},
+        "aicodewith-openai/<模型名>": {}
+      }
+    }
+  }
+}
+```
+
+> **注意**：不要用 `openclaw models set` 命令设置默认模型，该命令会重写 `agents.defaults.models`，导致其他模型从列表中消失。始终直接编辑配置文件。
 
 **测试**: `openclaw agent --local --to "+10000000000" --message "say hi" --json`
 
