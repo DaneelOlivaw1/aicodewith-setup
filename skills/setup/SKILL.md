@@ -128,24 +128,56 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 **前提**: Node.js 18+
 
-**适配器选择**：
+**适配器选择**（按模型的 `api_format` 字段）：
 
-| 模型类型 | npm 包 | baseURL 格式 |
+| api_format | npm 包 | baseURL 格式 |
 |----------|--------|-------------|
-| OpenAI (GPT) | `@ai-sdk/openai` | `<BASE_URL>/v1` |
-| Claude | `@ai-sdk/anthropic` | `<BASE_URL>/v1` |
-| Gemini | `@ai-sdk/google` | `<BASE_URL>/gemini_cli/v1beta` |
+| `openai-responses` | `@ai-sdk/openai` | `<BASE_URL>/v1` |
+| `openai-completions` | `@ai-sdk/openai-compatible` | `<BASE_URL>/v1` |
+| `anthropic` | `@ai-sdk/anthropic` | `<BASE_URL>/v1` |
+| `gemini` | `@ai-sdk/google` | `<BASE_URL>/gemini_cli/v1beta` |
+
+> **注意**：`openai-responses`（GPT 系列）使用 OpenAI Responses API，必须用 `@ai-sdk/openai`；`openai-completions`（DeepSeek、GLM、Kimi、Qwen 等）使用 Chat Completions，必须用 `@ai-sdk/openai-compatible`，否则请求会挂起。
 
 **步骤**：
 
 1. 安装（如未安装）: `npm i -g opencode-ai`
 2. 运行 `opencode` 一次初始化配置目录
-3. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），按模型类型分组添加多个 provider，将该类型下的所有模型全部写入 models：
+3. 获取模型列表后，**按供应商（`provider` 字段）分组**，每个供应商建一个独立的 provider 条目。**不要按 `api_format` 合并，也不要过滤任何模型——完全以 `/models` 端点返回的数据为准。**
+
+   常见供应商与 provider ID 对应关系：
+   | 供应商 | provider ID | npm 包 |
+   |--------|-------------|--------|
+   | anthropic | `aicodewith-anthropic` | `@ai-sdk/anthropic` |
+   | openai | `aicodewith-openai` | `@ai-sdk/openai` |
+   | gemini | `aicodewith-gemini` | `@ai-sdk/google` |
+   | deepseek | `aicodewith-deepseek` | `@ai-sdk/openai-compatible` |
+   | glm | `aicodewith-glm` | `@ai-sdk/openai-compatible` |
+   | minimax | `aicodewith-minimax` | `@ai-sdk/openai-compatible` |
+   | kimi | `aicodewith-kimi` | `@ai-sdk/openai-compatible` |
+   | qwen | `aicodewith-qwen` | `@ai-sdk/openai-compatible` |
+   | step | `aicodewith-step` | `@ai-sdk/openai-compatible` |
+
+4. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），使用 `/models` 返回的真实值填充 `context` 和 `output`：
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
+    "aicodewith-anthropic": {
+      "npm": "@ai-sdk/anthropic",
+      "name": "AICodeWith Anthropic",
+      "options": {
+        "baseURL": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>"
+      },
+      "models": {
+        "<模型id>": {
+          "name": "<模型name>",
+          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
+        }
+      }
+    },
     "aicodewith-openai": {
       "npm": "@ai-sdk/openai",
       "name": "AICodeWith OpenAI",
@@ -154,23 +186,9 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<所有 OpenAI 模型，每个一条>": {
-          "name": "<模型显示名>",
-          "limit": { "context": 200000, "output": 65536 }
-        }
-      }
-    },
-    "aicodewith-claude": {
-      "npm": "@ai-sdk/anthropic",
-      "name": "AICodeWith Claude",
-      "options": {
-        "baseURL": "<BASE_URL>/v1",
-        "apiKey": "<用户的KEY>"
-      },
-      "models": {
-        "<所有 Claude 模型，每个一条>": {
-          "name": "<模型显示名>",
-          "limit": { "context": 200000, "output": 65536 }
+        "<模型id>": {
+          "name": "<模型name>",
+          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
         }
       }
     },
@@ -182,9 +200,23 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<所有 Gemini 模型，每个一条>": {
-          "name": "<模型显示名>",
-          "limit": { "context": 200000, "output": 65536 }
+        "<模型id>": {
+          "name": "<模型name>",
+          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
+        }
+      }
+    },
+    "aicodewith-deepseek": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "AICodeWith DeepSeek",
+      "options": {
+        "baseURL": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>"
+      },
+      "models": {
+        "<模型id>": {
+          "name": "<模型name>",
+          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
         }
       }
     }
@@ -192,7 +224,7 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 }
 ```
 
-**测试**: `opencode run -m "aicodewith-openai/<模型名>" "say hi"`
+**测试**: `opencode run -m "aicodewith-anthropic/<模型名>" "say hi"`
 
 ---
 
