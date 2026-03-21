@@ -243,16 +243,13 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 ```
 
 **测试**: `opencode run -m "aicodewith-anthropic/<模型名>" "say hi"`
-```
-
-**测试**: `opencode run -m "aicodewith-openai/<模型名>" "say hi"`
 
 ---
 
 ## OpenClaw
 
 > 官方文档: https://docs.openclaw.ai/gateway/configuration-reference
-> OpenClaw 通过 `models.providers` 配置自定义 provider。不同模型类型使用不同的 api 适配器。
+> OpenClaw 通过 `models.providers` 配置自定义 provider。每个厂商配置为��立 provider，便于在 UI 中区分和管理。
 
 **前提**: Node.js 18+，需要 git
 
@@ -261,24 +258,24 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 | api_format | OpenClaw api 值 | baseUrl 格式 |
 |----------|--------|-------------|
 | `openai-responses` | `openai-responses` | `<BASE_URL>/v1` |
-| `openai-completions` | `openai-chat` | `<BASE_URL>/v1` |
+| `openai-completions` | `openai-completions` | `<BASE_URL>/v1` |
 | `anthropic` | `anthropic-messages` | `<BASE_URL>` (不带 /v1) |
 | `gemini` | `google-generative-ai` | `<BASE_URL>/gemini_cli/v1beta` |
 
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 编辑配置文件 `~/.openclaw/openclaw.json`，按模型类型分组添加多个 provider。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
+2. 编辑配置文件 `~/.openclaw/openclaw.json`，**按 provider（厂商）分组**，每个厂商一个 provider 条目。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
 
 ```json
 {
   "models": {
     "mode": "merge",
     "providers": {
-      "aicodewith-openai": {
-        "baseUrl": "<BASE_URL>/v1",
+      "aicodewith-claude": {
+        "baseUrl": "<BASE_URL>",
         "apiKey": "<用户的KEY>",
-        "api": "openai-responses",
+        "api": "anthropic-messages",
         "models": [
           {
             "id": "<模型id>",
@@ -290,10 +287,10 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
           }
         ]
       },
-      "aicodewith-claude": {
-        "baseUrl": "<BASE_URL>",
+      "aicodewith-openai": {
+        "baseUrl": "<BASE_URL>/v1",
         "apiKey": "<用户的KEY>",
-        "api": "anthropic-messages",
+        "api": "openai-responses",
         "models": [
           {
             "id": "<模型id>",
@@ -319,15 +316,74 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
             "maxTokens": "<模型max_output_tokens>"
           }
         ]
+      },
+      "aicodewith-deepseek": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
+          }
+        ]
+      },
+      "aicodewith-qwen": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
+      },
+      "aicodewith-kimi": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
+      },
+      "aicodewith-glm": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
+      },
+      "aicodewith-minimax": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
       }
     }
   }
 }
 ```
 
-3. 设置默认模型: `openclaw models set aicodewith-claude/<模型名>`
+> 按 `/models` 接口返回的 `provider` 字段命名各 provider（格式：`aicodewith-<provider值>`）。所有 `openai-completions` 类型的厂商（DeepSeek、Qwen、Kimi、GLM、MiniMax 等）均使用 `<BASE_URL>/v1` + `openai-completions`，只是模型列表不同。
 
-**测试**: `openclaw agent --local --to "+10000000000" -m "say hi" --json`
+3. 在 `agents.defaults.model.primary` 字段设置默认模型：
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "aicodewith-claude/<模型名>"
+      },
+      "models": {
+        "aicodewith-claude/<模型名>": {},
+        "aicodewith-openai/<模型名>": {}
+      }
+    }
+  }
+}
+```
+
+> **注意**：不要用 `openclaw models set` 命令设置默认模型，该命令会重写 `agents.defaults.models`，导致其他模型从列表中消失。始终直接编辑配置文件。
+
+**测试**: `openclaw agent --local --to "+10000000000" --message "say hi" --json`
 
 ---
 
