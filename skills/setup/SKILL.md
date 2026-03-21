@@ -20,11 +20,29 @@ argument-hint: [工具名称]
 
 1. 确认用户要配置哪个工具（可多选或全部）
 2. 收集 API Key 和线路偏好（默认主线路）
-3. 获取模型列表：用 Bash 执行 `curl -s -H "Authorization: Bearer <用户的KEY>" <BASE_URL>/v1/models`，解析返回的 JSON，提取所有可用模型。按模型 ID 前缀分类：
-   - `claude-` 开头 → Claude 类型
-   - `gpt-` / `o1-` / `o3-` / `o4-` 开头 → OpenAI 类型
-   - `gemini-` 开头 → Gemini 类型
-4. 按下方对应工具的方法执行配置，将所有支持的模型全部写入配置
+3. 获取模型列表：**必须用 Bash 执行 `curl -s <BASE_URL>/models`**（不要使用 Fetch/WebFetch 工具，会被安全策略拦截），解析返回的 JSON。响应格式：
+   ```json
+   {
+     "data": [
+       {
+         "id": "claude-sonnet-4-6",
+         "name": "Sonnet 4.6",
+         "provider": "anthropic",
+         "context_window": 200000,
+         "max_output_tokens": 128000,
+         "supports_reasoning": true,
+         "input_modalities": ["text"],
+         "api_format": "anthropic"
+       }
+     ]
+   }
+   ```
+   按 `api_format` 字段分组配置：
+   - `anthropic` → Claude 类型（Anthropic Messages API）
+   - `openai-responses` → OpenAI Responses API（GPT 系列）
+   - `openai-completions` → OpenAI Chat Completions（DeepSeek、GLM、Kimi、Qwen 等）
+   - `gemini` → Gemini 类型（Google Generative AI）
+4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`input_modalities` 填充配置，不要硬编码
 5. 必须测试验证
 
 ---
@@ -50,7 +68,7 @@ argument-hint: [工具名称]
 }
 ```
 
-3. 将从模型列表中获取的所有 Claude 模型（`claude-` 开头）写入 `availableModels` 字段：
+3. 将从模型列表中获取的所有 Claude 模型（`provider` 为 `anthropic`）写入 `availableModels` 字段：
 
 ```json
 {
@@ -231,55 +249,56 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 ## OpenClaw
 
 > 官方文档: https://docs.openclaw.ai/gateway/configuration-reference
-> OpenClaw 通过 `models.providers` 配置自定义 provider。不同模型类型使用不同的 api 适配器。
+> OpenClaw 通过 `models.providers` 配置自定义 provider。每个厂商配置为��立 provider，便于在 UI 中区分和管理。
 
 **前提**: Node.js 18+，需要 git
 
-**适配器选择**：
+**适配器选择**（按模型的 `api_format` 字段）：
 
-| 模型类型 | api 值 | baseUrl 格式 |
+| api_format | OpenClaw api 值 | baseUrl 格式 |
 |----------|--------|-------------|
-| OpenAI (GPT) | `openai-responses` | `<BASE_URL>/v1` |
-| Claude | `anthropic-messages` | `<BASE_URL>` (不带 /v1) |
-| Gemini | `google-generative-ai` | `<BASE_URL>/gemini_cli/v1beta` |
+| `openai-responses` | `openai-responses` | `<BASE_URL>/v1` |
+| `openai-completions` | `openai-completions` | `<BASE_URL>/v1` |
+| `anthropic` | `anthropic-messages` | `<BASE_URL>` (不带 /v1) |
+| `gemini` | `google-generative-ai` | `<BASE_URL>/gemini_cli/v1beta` |
 
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 编辑配置文件 `~/.openclaw/openclaw.json`，按模型类型分组添加多个 provider，将该类型下的所有模型全部写入 models：
+2. 编辑配置文件 `~/.openclaw/openclaw.json`，**按 provider（厂商）分组**，每个厂商一个 provider 条目。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
 
 ```json
 {
   "models": {
     "mode": "merge",
     "providers": {
-      "aicodewith-openai": {
-        "baseUrl": "<BASE_URL>/v1",
-        "apiKey": "<用户的KEY>",
-        "api": "openai-responses",
-        "models": [
-          {
-            "id": "<每个 OpenAI 模型一条>",
-            "name": "<模型显示名>",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 65536
-          }
-        ]
-      },
       "aicodewith-claude": {
         "baseUrl": "<BASE_URL>",
         "apiKey": "<用户的KEY>",
         "api": "anthropic-messages",
         "models": [
           {
-            "id": "<每个 Claude 模型一条>",
-            "name": "<模型显示名>",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 65536
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
+          }
+        ]
+      },
+      "aicodewith-openai": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-responses",
+        "models": [
+          {
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
           }
         ]
       },
@@ -289,28 +308,70 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
         "api": "google-generative-ai",
         "models": [
           {
-            "id": "<每个 Gemini 模型一条>",
-            "name": "<模型显示名>",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 65536
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
           }
         ]
+      },
+      "aicodewith-deepseek": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "<模型id>",
+            "name": "<模型name>",
+            "reasoning": "<模型supports_reasoning>",
+            "input": "<模型input_modalities>",
+            "contextWindow": "<模型context_window>",
+            "maxTokens": "<模型max_output_tokens>"
+          }
+        ]
+      },
+      "aicodewith-qwen": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
+      },
+      "aicodewith-kimi": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
+      },
+      "aicodewith-glm": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
+      },
+      "aicodewith-minimax": {
+        "baseUrl": "<BASE_URL>/v1",
+        "apiKey": "<用户的KEY>",
+        "api": "openai-completions",
+        "models": [...]
       }
     }
   }
 }
 ```
 
+> 按 `/models` 接口返回的 `provider` 字段命名各 provider（格式：`aicodewith-<provider值>`）。所有 `openai-completions` 类型的厂商（DeepSeek、Qwen、Kimi、GLM、MiniMax 等）均使用 `<BASE_URL>/v1` + `openai-completions`，只是模型列表不同。
+
 3. 设置默认模型: `openclaw models set aicodewith-claude/<模型名>`
 
-**测试**: `openclaw agent --local --to "+10000000000" -m "say hi" --json`
+**测试**: `openclaw agent --local --to "+10000000000" --message "say hi" --json`
 
 ---
 
 ## 执行规则
 
+- 获取模型列表必须用 Bash 执行 `curl` 命令，不要使用 WebFetch 或 Fetch 工具（会被域名安全策略拦截）
 - 操作配置文件前，先 Read 读取现有内容，合并而非覆盖
 - 创建目录用 `mkdir -p`
 - 完成后告知配置文件的具体路径
