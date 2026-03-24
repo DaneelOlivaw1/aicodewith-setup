@@ -143,8 +143,36 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 > 官方文档: https://opencode.ai/docs/providers/
 > OpenCode 通过 `provider` 配置添加自定义 API 提供商。不同模型类型使用不同的 npm 适配器包。
+> 配置 OpenCode 同时会安装 oh-my-opencode（强大的多 agent 编排框架），并将所有 agent 模型替换为 AICodeWith 模型。
 
 **前提**: Node.js 18+
+
+### 步骤 1: 安装 OpenCode（如未安装）
+
+```bash
+npm i -g opencode-ai
+```
+
+### 步骤 2: 清理旧版 opencode-aicodewith-auth 插件（如存在）
+
+读取 `~/.config/opencode/opencode.json`（如存在），检查是否安装了旧版 `opencode-aicodewith-auth` 插件。
+
+**检测方式**：在 `plugin` 数组中查找包含 `opencode-aicodewith-auth` 的条目（可能是以下任意形式）：
+- `"opencode-aicodewith-auth"`
+- `"opencode-aicodewith-auth@x.y.z"`
+- `"file:///...opencode-aicodewith-auth/dist/index.js"`
+- 任何包含 `opencode-aicodewith-auth` 字样的字符串
+
+**如果检测到，执行清理**：
+1. 从 `plugin` 数组中移除所有包含 `opencode-aicodewith-auth` 的条目
+2. 从 `provider` 对象中移除 `"aicodewith"` 键（单 provider 配置，会被新的多 provider 配置替代）
+3. 如果 `model` 字段以 `aicodewith/` 开头，先记下模型名（`aicodewith/` 之后的部分），后续会用新的 provider 前缀替换
+4. 清理 `~/.local/share/opencode/auth.json` 中的 `"aicodewith"` 条目（如存在）
+5. **保留** `oh-my-opencode` 相关条目（plugin 中的 `"oh-my-opencode"` 和 `oh-my-opencode.json` 文件），后续步骤会更新它们
+
+**如果未检测到**，跳过此步。
+
+### 步骤 3: 配置 OpenCode Provider
 
 **适配器选择**（按模型的 `api_format` 字段）：
 
@@ -157,26 +185,23 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
 
 > **注意**：`openai-responses`（GPT 系列）使用 OpenAI Responses API，必须用 `@ai-sdk/openai`；`openai-completions`（DeepSeek、GLM、Kimi、Qwen 等）使用 Chat Completions，必须用 `@ai-sdk/openai-compatible`，否则请求会挂起。
 
-**步骤**：
+获取模型列表后，**按供应商（`provider` 字段）分组**，每个供应商建一个独立的 provider 条目。**不要按 `api_format` 合并，也不要过滤任何模型——完全以 `/models` 端点返回的数据为准。**
 
-1. 安装（如未安装）: `npm i -g opencode-ai`
-2. 运行 `opencode` 一次初始化配置目录
-3. 获取模型列表后，**按供应商（`provider` 字段）分组**，每个供应商建一个独立的 provider 条目。**不要按 `api_format` 合并，也不要过滤任何模型——完全以 `/models` 端点返回的数据为准。**
+常见供应商与 provider ID 对应关系：
 
-   常见供应商与 provider ID 对应关系：
-   | 供应商 | provider ID | npm 包 |
-   |--------|-------------|--------|
-   | anthropic | `aicodewith-anthropic` | `@ai-sdk/anthropic` |
-   | openai | `aicodewith-openai` | `@ai-sdk/openai` |
-   | gemini | `aicodewith-gemini` | `@ai-sdk/google` |
-   | deepseek | `aicodewith-deepseek` | `@ai-sdk/openai-compatible` |
-   | glm | `aicodewith-glm` | `@ai-sdk/openai-compatible` |
-   | minimax | `aicodewith-minimax` | `@ai-sdk/openai-compatible` |
-   | kimi | `aicodewith-kimi` | `@ai-sdk/openai-compatible` |
-   | qwen | `aicodewith-qwen` | `@ai-sdk/openai-compatible` |
-   | step | `aicodewith-step` | `@ai-sdk/openai-compatible` |
+| 供应商 | provider ID | npm 包 |
+|--------|-------------|--------|
+| anthropic | `aicodewith-anthropic` | `@ai-sdk/anthropic` |
+| openai | `aicodewith-openai` | `@ai-sdk/openai` |
+| gemini | `aicodewith-gemini` | `@ai-sdk/google` |
+| deepseek | `aicodewith-deepseek` | `@ai-sdk/openai-compatible` |
+| glm | `aicodewith-glm` | `@ai-sdk/openai-compatible` |
+| minimax | `aicodewith-minimax` | `@ai-sdk/openai-compatible` |
+| kimi | `aicodewith-kimi` | `@ai-sdk/openai-compatible` |
+| qwen | `aicodewith-qwen` | `@ai-sdk/openai-compatible` |
+| step | `aicodewith-step` | `@ai-sdk/openai-compatible` |
 
-4. 编辑配置文件（`~/.config/opencode/opencode.json` 或 `~/.opencode.json`），使用 `/models` 返回的真实值填充 `context` 和 `output`：
+编辑 `~/.config/opencode/opencode.json`，使用 `/models` 返回的真实值填充 `context` 和 `output`：
 
 ```json
 {
@@ -239,6 +264,145 @@ GEMINI_MODEL=<用户选择的模型，默认 gemini-3-pro>
       }
     }
   }
+}
+```
+
+**记住你配置了哪些 provider ID**（如 `aicodewith-anthropic`、`aicodewith-openai`、`aicodewith-gemini`），以及每个 provider 下有哪些模型 ID。后面配置 oh-my-opencode 时需要用 `<provider-id>/<模型id>` 格式引用。
+
+### 步骤 4: 安装 oh-my-opencode
+
+oh-my-opencode 是一个 OpenCode 增强框架，提供多 agent 协作编排（Sisyphus、Oracle、Librarian 等）。必须先通过安装命令生成配置文件，然后再修改模型配置。
+
+**4.1 运行安装命令**
+
+```bash
+bunx oh-my-opencode install --no-tui --claude=no --chatgpt=no --gemini=no --copilot=no
+```
+
+> 所有订阅选项设为 `no`，因为我们使用 AICodeWith 作为统一认证层，不需要单独的 Claude/ChatGPT/Gemini 订阅。
+
+此命令会：
+- 将 `"oh-my-opencode"` 添加到 `~/.config/opencode/opencode.json` 的 `plugin` 数组
+- 生成 `~/.config/opencode/oh-my-opencode.json` 配置文件
+
+**4.2 验证安装**
+
+确认以下文件存在且有效：
+- `~/.config/opencode/opencode.json` 的 `plugin` 数组包含 `"oh-my-opencode"`
+- `~/.config/opencode/oh-my-opencode.json` 存在且是有效 JSON
+
+### 步骤 5: 配置 oh-my-opencode 使用 AICodeWith 模型
+
+**5.1 读取生成的配置**
+
+读取 `~/.config/opencode/oh-my-opencode.json`，解析其中的 `agents` 和 `categories` 对象。
+
+**5.2 模型替换**
+
+遍历配置中**所有** agent 和 category（不要硬编码列表，OMO 可能会新增），将每个的 `model` 字段替换为对应的 AICodeWith 模型。
+
+模型 ID 格式为 `<provider-id>/<模型id>`，其中 `<provider-id>` 是步骤 3 中在 opencode.json 配置的 provider 名称，`<模型id>` 是 `/models` 接口返回的模型 ID。例如：`aicodewith-anthropic/claude-opus-4-6`、`aicodewith-openai/gpt-5.2`、`aicodewith-gemini/gemini-3-pro`。
+
+**替换规则**——根据 agent/category 的角色语义，从步骤 3 获取的可用模型中选择最合适的：
+
+**Agent 替换规则**：
+
+| 角色类型 | 匹配的 Agent 名称 | 选择策略 |
+|---------|------------------|---------|
+| 主编排/深度推理 | sisyphus, prometheus, metis, build, plan, OpenCode-Builder | 选 `anthropic` 类中最强的模型（通常是 opus 级别） |
+| 架构/审查/策略 | oracle, momus | 选 `openai-responses` 类中最强的非 codex 模型（通常是 gpt-5.x） |
+| 代码生成 | hephaestus | 选 `openai-responses` 类中带 `codex` 的模型 |
+| 前端/视觉/多模态 | frontend-ui-ux-engineer, document-writer, multimodal-looker | 选 `gemini` 类模型 |
+| 通用/轻量任务 | librarian, explore, atlas, sisyphus-junior, general, 以及任何不认识的新 agent | 选 `anthropic` 类中 sonnet 级别（性价比最优） |
+
+**Category 替换规则**：
+
+| 类型 | 匹配的 Category 名称 | 选择策略 |
+|------|---------------------|---------|
+| 视觉/前端/创意/写作 | visual-engineering, visual, artistry, writing | 选 `gemini` 类模型 |
+| 重度推理 | ultrabrain, deep | 选 `openai-responses` 类中最强的模型（codex 或 gpt-5.x） |
+| 业务逻辑/高级通用 | business-logic, unspecified-high | 选 `openai-responses` 类中最强的非 codex 模型 |
+| 快速/轻量/通用 | quick, unspecified-low, data-analysis, 以及任何不认识的新 category | 选 `anthropic` 类中 sonnet 级别 |
+
+**遇到不认识的 agent/category 名称时**，按名称关键词推断：
+- 包含 `visual`、`frontend`、`ui`、`ux`、`design`、`image` → gemini 类
+- 包含 `oracle`、`review`、`architect`、`strategy`、`logic` → openai-responses 类最强
+- 包含 `build`、`plan`、`orchestrat`、`primary` → anthropic 类最强
+- 包含 `code`、`codex`、`generate` → openai-responses 类中 codex 模型
+- 其他/无法判断 → anthropic 类 sonnet 级别（安全默认值）
+
+**5.3 保留 variant 配置**
+
+如果原配置中某个 agent/category 已有 `variant` 字段（如 `"variant": "high"`），保留不动。`variant` 控制推理强度，是 OMO 根据角色设定的，不需要我们改。
+
+**5.4 设置其他字段**
+
+- 设置 `"google_auth": false`（禁用 OMO 内置的 Google OAuth 认证，因为使用 AICodeWith）
+- **保留**配置中的所有其他字段不动（`disabled_hooks`、`disabled_agents`、`disabled_skills`、`disabled_mcps`、`disabled_commands` 等）
+
+**5.5 写回配置**
+
+将修改后的配置写回 `~/.config/opencode/oh-my-opencode.json`。
+
+**示例**——假设 `/models` 返回了 `claude-opus-4-6`（anthropic）、`claude-sonnet-4-5`（anthropic）、`gpt-5.2`（openai）、`gpt-5.3-codex`（openai）、`gemini-3-pro`（gemini），修改后的配置大致如下：
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "google_auth": false,
+  "agents": {
+    "sisyphus": {
+      "model": "aicodewith-anthropic/claude-opus-4-6",
+      "variant": "max"
+    },
+    "oracle": {
+      "model": "aicodewith-openai/gpt-5.2",
+      "variant": "high"
+    },
+    "hephaestus": {
+      "model": "aicodewith-openai/gpt-5.3-codex",
+      "variant": "medium"
+    },
+    "librarian": {
+      "model": "aicodewith-anthropic/claude-sonnet-4-5"
+    },
+    "explore": {
+      "model": "aicodewith-anthropic/claude-sonnet-4-5"
+    },
+    "multimodal-looker": {
+      "model": "aicodewith-gemini/gemini-3-pro"
+    },
+    "frontend-ui-ux-engineer": {
+      "model": "aicodewith-gemini/gemini-3-pro"
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "aicodewith-gemini/gemini-3-pro"
+    },
+    "ultrabrain": {
+      "model": "aicodewith-openai/gpt-5.3-codex",
+      "variant": "high"
+    },
+    "quick": {
+      "model": "aicodewith-anthropic/claude-sonnet-4-5"
+    },
+    "business-logic": {
+      "model": "aicodewith-openai/gpt-5.2"
+    }
+  }
+}
+```
+
+> 上面只是示例，实际配置应包含 OMO 安装时生成的**所有** agent 和 category。模型 ID 以 `/models` 接口实际返回值为准。
+
+### 步骤 6: 设置默认模型
+
+在 `~/.config/opencode/opencode.json` 中设置默认模型（建议选 anthropic 类最强模型）：
+
+```json
+{
+  "model": "aicodewith-anthropic/<最强claude模型id>"
 }
 ```
 
