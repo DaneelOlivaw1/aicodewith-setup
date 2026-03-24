@@ -42,7 +42,7 @@ argument-hint: [工具名称]
    - `openai-responses` → OpenAI Responses API（GPT 系列）
    - `openai-completions` → OpenAI Chat Completions（DeepSeek、GLM、Kimi、Qwen 等）
    - `gemini` → Gemini 类型（Google Generative AI）
-4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`input_modalities` 填充配置，不要硬编码
+4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`input_modalities` 填充配置，不要硬编码。**特别注意**：如果模型的 `input_modalities` 包含 `"image"`，必须在配置中声明 `modalities` 字段；如果模型的 `supports_reasoning` 为 `true`，必须声明 `"reasoning": true`（具体格式见各工具配置示例），否则该模型无法使用视觉和推理能力
 5. 必须测试验证
 
 ---
@@ -201,7 +201,7 @@ npm i -g opencode-ai
 | qwen | `aicodewith-qwen` | `@ai-sdk/openai-compatible` |
 | step | `aicodewith-step` | `@ai-sdk/openai-compatible` |
 
-编辑 `~/.config/opencode/opencode.json`，使用 `/models` 返回的真实值填充 `context` 和 `output`：
+编辑 `~/.config/opencode/opencode.json`，使用 `/models` 返回的真实值填充 `context`、`output`、`modalities` 和 `reasoning`。**如果模型的 `input_modalities` 包含 `"image"`，必须添加 `modalities` 字段声明视觉能力**；**如果模型的 `supports_reasoning` 为 `true`，必须添加 `"reasoning": true`**，否则 OpenCode 不会为该模型启用思考/推理模式：
 
 ```json
 {
@@ -215,9 +215,17 @@ npm i -g opencode-ai
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<模型id>": {
-          "name": "<模型name>",
-          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
+        "claude-sonnet-4-6": {
+          "name": "Sonnet 4.6",
+          "reasoning": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
+          "limit": { "context": 200000, "output": 128000 }
+        },
+        "claude-opus-4-6": {
+          "name": "Opus 4.6",
+          "reasoning": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
+          "limit": { "context": 200000, "output": 128000 }
         }
       }
     },
@@ -229,9 +237,11 @@ npm i -g opencode-ai
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<模型id>": {
-          "name": "<模型name>",
-          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
+        "gpt-5.2": {
+          "name": "GPT-5.2",
+          "reasoning": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
+          "limit": { "context": 200000, "output": 100000 }
         }
       }
     },
@@ -243,9 +253,11 @@ npm i -g opencode-ai
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<模型id>": {
-          "name": "<模型name>",
-          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
+        "gemini-3-pro": {
+          "name": "Gemini 3 Pro",
+          "reasoning": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
+          "limit": { "context": 1048576, "output": 65536 }
         }
       }
     },
@@ -257,15 +269,20 @@ npm i -g opencode-ai
         "apiKey": "<用户的KEY>"
       },
       "models": {
-        "<模型id>": {
-          "name": "<模型name>",
-          "limit": { "context": "<模型context_window>", "output": "<模型max_output_tokens>" }
+        "deepseek-r1": {
+          "name": "DeepSeek R1",
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 65536 }
         }
       }
     }
   }
 }
 ```
+
+> **Modalities 规则**：遍历 `/models` 返回的每个模型，检查其 `input_modalities` 字段。如果包含 `"image"`，则在该模型的配置中添加 `"modalities": { "input": ["text", "image"], "output": ["text"] }`。如果只有 `["text"]`，则**不要**添加 `modalities` 字段。上面示例中 `claude-opus-4-6`、`claude-sonnet-4-6`、`gpt-5.2`、`gemini-3-pro` 带有 modalities 是因为它们支持视觉输入，而 `deepseek-r1` 不带是因为只支持文本。**以 `/models` 接口实际返回的 `input_modalities` 为准，不要猜测。**
+
+> **Reasoning 规则**：检查每个模型的 `supports_reasoning` 字段。如果为 `true`，则在该模型的配置中添加 `"reasoning": true`。如果为 `false`，则**不要**添加 `reasoning` 字段。上面示例中所有模型都带有 `reasoning: true`，因为它们都支持推理。对于不支持推理的模型（如某些轻量 instruct 模型），不要添加此字段。设置 `reasoning: true` 后，OpenCode 会为该模型启用内置的思考 variant（如 Anthropic 的 `high`/`max`、OpenAI 的 `low`/`medium`/`high`/`xhigh`、Gemini 的 `low`/`high`），OMO 的 agent/category 通过 `variant` 字段选择具体强度。**以 `/models` 接口实际返回的 `supports_reasoning` 为准，不要猜测。**
 
 **记住你配置了哪些 provider ID**（如 `aicodewith-anthropic`、`aicodewith-openai`、`aicodewith-gemini`），以及每个 provider 下有哪些模型 ID。后面配置 oh-my-opencode 时需要用 `<provider-id>/<模型id>` 格式引用。
 
@@ -276,7 +293,7 @@ oh-my-opencode 是一个 OpenCode 增强框架，提供多 agent 协作编排（
 **4.1 运行安装命令**
 
 ```bash
-bunx oh-my-opencode install --no-tui --claude=no --chatgpt=no --gemini=no --copilot=no
+bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copilot no
 ```
 
 > 所有订阅选项设为 `no`，因为我们使用 AICodeWith 作为统一认证层，不需要单独的 Claude/ChatGPT/Gemini 订阅。
