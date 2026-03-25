@@ -562,6 +562,8 @@ bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copil
 }
 ```
 
+> **重要**：`agents.defaults.models` 是一个**白名单**——只有列在这里的模型才会出现在 `openclaw models list` 中。必须遍历 `models.providers` 中定义的**所有模型**，以 `"<provider-id>/<model-id>": {}` 格式全部添加到此字段。遗漏任何模型都会导致该模型不出现在模型列表中。
+
 > **注意**：不要用 `openclaw models set` 命令设置默认模型，该命令会重写 `agents.defaults.models`，导致其他模型从列表中消失。始终直接编辑配置文件。
 
 **测试**: `openclaw agent --local --to "+10000000000" --message "say hi" --json`
