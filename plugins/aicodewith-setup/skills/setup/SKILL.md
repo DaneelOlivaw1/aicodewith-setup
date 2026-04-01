@@ -41,10 +41,10 @@ argument-hint: [工具名称]
    }
    ```
    按 `api_format` 字段分组配置：
-   - `anthropic` → Claude 类型（Anthropic Messages API）
-   - `openai-responses` → OpenAI Responses API（GPT 系列）
-   - `openai-completions` → OpenAI Chat Completions（DeepSeek、GLM、Kimi、Qwen 等）
-   - `gemini` → Gemini 类型（Google Generative AI）
+    - `anthropic` → Claude 类型（Anthropic Messages API）
+    - `openai-responses` → OpenAI Responses API（GPT 系列）
+    - `openai-completions` → OpenAI Chat Completions（DeepSeek、GLM、Kimi、Qwen 等）
+    - `gemini` → Gemini 类型（Google Generative AI）
 4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`supports_temperature`、`supports_tool_call`、`input_modalities`、`output_modalities` 填充配置，不要硬编码。**特别注意**：如果模型的 `input_modalities` 包含 `"image"`，必须在配置中声明 `modalities` 和 `attachment` 字段；如果模型的 `supports_reasoning` 为 `true`，必须声明 `"reasoning": true`（具体格式见各工具配置示例），否则该模型无法使用视觉和推理能力
 5. 必须测试验证
 
@@ -54,7 +54,7 @@ argument-hint: [工具名称]
 
 > 官方文档: https://code.claude.com/docs/en/env-vars
 
-通过环境变量将请求路由到自定义端点。配置写入 `~/.claude/settings.json` 的 `env` 字段。需要同时设置 `ANTHROPIC_API_KEY` �� `ANTHROPIC_AUTH_TOKEN`，前者用于非交互模式，后者确保交互模式下跳过登录。
+通过环境变量将请求路由到自定义端点。配置写入 `~/.claude/settings.json` 的 `env` 字段。需要同时设置 `ANTHROPIC_API_KEY` 和 `ANTHROPIC_AUTH_TOKEN`，前者用于非交互模式，后者确保交互模式下跳过登录。
 
 **步骤**：
 
@@ -465,8 +465,8 @@ bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copil
 
 ## OpenClaw
 
-> 官方文档: https://docs.openclaw.ai/gateway/configuration-reference
-> OpenClaw 通过 `models.providers` 配置自定义 provider。每个厂商配置为��立 provider，便于在 UI 中区分和管理。
+> 官方文档: https://docs.openclaw.ai/gateway/configuration-reference 及 https://docs.openclaw.ai/concepts/model-providers
+> OpenClaw 通过 `models.providers` 配置自定义 provider。配置格式为 JSON5（支持注释和尾逗号）。每个厂商配置为独立 provider，便于在 UI 中区分和管理。模型引用格式为 `provider/model`（如 `aicodewith-claude/claude-opus-4-6`）。
 
 **前提**: Node.js 18+，需要 git
 
@@ -482,7 +482,7 @@ bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copil
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 编辑配置文件 `~/.openclaw/openclaw.json`，**按 provider（厂商）分组**，每个厂商一个 provider 条目。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
+2. 编辑配置文件 `~/.openclaw/openclaw.json`（JSON5 格式，支持注释和尾逗号），**按 provider（厂商）分组**，每个厂商一个 provider 条目。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
 
 ```json
 {
@@ -579,26 +579,35 @@ bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copil
 ```
 
 > 按 `/models` 接口返回的 `provider` 字段命名各 provider（格式：`aicodewith-<provider值>`）。所有 `openai-completions` 类型的厂商（DeepSeek、Qwen、Kimi、GLM、MiniMax 等）均使用 `<BASE_URL>/v1` + `openai-completions`，只是模型列表不同。
+>
+> **模型字段说明**：`reasoning`（boolean）、`input`（数组，如 `["text", "image"]`）、`contextWindow`（number）、`maxTokens`（number）为推荐字段。省略时 OpenClaw 使用默认值：`reasoning: false`、`input: ["text"]`、`contextWindow: 200000`、`maxTokens: 8192`。可选字段 `cost`（`{ input, output, cacheRead, cacheWrite }`）省略时默认为 0。
+>
+> **注意**：对于使用 `api: "openai-completions"` 且 `baseUrl` 非 `api.openai.com` 的 provider（即所有 AICodeWith 代理），OpenClaw 会自动设置 `compat.supportsDeveloperRole: false`，避免不支持 `developer` 角色的 provider 返回 400 错误，无需手动配置。
 
-3. 在 `agents.defaults.model.primary` 字段设置默认模型：
+3. 在 `agents.defaults.model.primary` 字段设置默认模型，并在 `agents.defaults.models` 中注册所有模型：
 
 ```json
 {
   "agents": {
     "defaults": {
       "model": {
-        "primary": "aicodewith-claude/<模型名>"
+        "primary": "aicodewith-claude/<最强claude模型>",
+        "fallbacks": ["aicodewith-openai/<备选模型>"]
       },
       "models": {
         "aicodewith-claude/<模型名>": {},
-        "aicodewith-openai/<模型名>": {}
+        "aicodewith-openai/<模型名>": {},
+        "aicodewith-gemini/<模型名>": {},
+        "aicodewith-deepseek/<模型名>": {}
       }
     }
   }
 }
 ```
 
-> **重要**：`agents.defaults.models` 是一个**白名单**——只有列在这里的模型才会出现在 `openclaw models list` 中。必须遍历 `models.providers` 中定义的**所有模型**，以 `"<provider-id>/<model-id>": {}` 格式全部添加到此字段。遗漏任何模型都会导致该模型不出现在模型列表中。
+> **重要**：`agents.defaults.models` 是一个**白名单（catalog + allowlist）**——只有列在这里的模型才会出现在 `openclaw models list` 和 `/model` 命令中。必须遍历 `models.providers` 中定义的**所有模型**，以 `"<provider-id>/<model-id>": {}` 格式全部添加到此字段。遗漏任何模型都会导致该模型不出现在模型列表中。每个条目可选包含 `alias`（快捷名）和 `params`（如 `temperature`、`maxTokens`、`cacheRetention`），空对象 `{}` 即可使用默认值。
+
+> **`model` 字段**：`agents.defaults.model` 接受字符串（如 `"aicodewith-claude/claude-opus-4-6"`）或对象（`{ primary, fallbacks }`）。建议使用对象形式配置 fallback 链以实现模型故障转移。
 
 > **注意**：不要用 `openclaw models set` 命令设置默认模型，该命令会重写 `agents.defaults.models`，导致其他模型从列表中消失。始终直接编辑配置文件。
 
