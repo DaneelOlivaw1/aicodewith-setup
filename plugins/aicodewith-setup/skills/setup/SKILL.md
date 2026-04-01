@@ -31,7 +31,10 @@ argument-hint: [工具名称]
          "context_window": 200000,
          "max_output_tokens": 128000,
          "supports_reasoning": true,
-         "input_modalities": ["text"],
+         "supports_temperature": true,
+         "supports_tool_call": true,
+         "input_modalities": ["text", "image"],
+         "output_modalities": ["text"],
          "api_format": "anthropic"
        }
      ]
@@ -42,7 +45,7 @@ argument-hint: [工具名称]
    - `openai-responses` → OpenAI Responses API（GPT 系列）
    - `openai-completions` → OpenAI Chat Completions（DeepSeek、GLM、Kimi、Qwen 等）
    - `gemini` → Gemini 类型（Google Generative AI）
-4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`input_modalities` 填充配置，不要硬编码。**特别注意**：如果模型的 `input_modalities` 包含 `"image"`，必须在配置中声明 `modalities` 字段；如果模型的 `supports_reasoning` 为 `true`，必须声明 `"reasoning": true`（具体格式见各工具配置示例），否则该模型无法使用视觉和推理能力
+4. 按下方对应工具的方法执行配置，使用返回的 `context_window`、`max_output_tokens`、`supports_reasoning`、`supports_temperature`、`supports_tool_call`、`input_modalities`、`output_modalities` 填充配置，不要硬编码。**特别注意**：如果模型的 `input_modalities` 包含 `"image"`，必须在配置中声明 `modalities` 和 `attachment` 字段；如果模型的 `supports_reasoning` 为 `true`，必须声明 `"reasoning": true`（具体格式见各工具配置示例），否则该模型无法使用视觉和推理能力
 5. 必须测试验证
 
 ---
@@ -183,7 +186,9 @@ npm i -g opencode-ai
 | `anthropic` | `@ai-sdk/anthropic` | `<BASE_URL>/v1` |
 | `gemini` | `@ai-sdk/google` | `<BASE_URL>/gemini_cli/v1beta` |
 
-> **注意**：`openai-responses`（GPT 系列）使用 OpenAI Responses API，必须用 `@ai-sdk/openai`；`openai-completions`（DeepSeek、GLM、Kimi、Qwen 等）使用 Chat Completions，必须用 `@ai-sdk/openai-compatible`，否则请求会挂起。
+> **注意**：
+> - `openai-responses`（GPT 系列）使用 OpenAI Responses API，必须用 `@ai-sdk/openai`；`openai-completions`（DeepSeek、GLM、Kimi、Qwen 等）使用 Chat Completions，必须用 `@ai-sdk/openai-compatible`，否则请求会挂起。
+> - **Prompt Caching**：使用 `@ai-sdk/openai` 的 provider（即 `aicodewith-openai`）必须在 `options` 中添加 `"setCacheKey": true`。原因：OpenAI 的 prompt caching 是隐式的，要求请求路由到同一后端节点；通过代理时无法保证路由一致，设置 `setCacheKey` 后 OpenCode 会在每次请求中携带 `promptCacheKey`，确保相同上下文的请求命中缓存。Anthropic（`@ai-sdk/anthropic`）使用显式 `cache_control` 标记嵌在请求体中，通过代理天然有效，无需额外配置。
 
 获取模型列表后，**按供应商（`provider` 字段）分组**，每个供应商建一个独立的 provider 条目。**不要按 `api_format` 合并，也不要过滤任何模型——完全以 `/models` 端点返回的数据为准。**
 
@@ -201,7 +206,22 @@ npm i -g opencode-ai
 | qwen | `aicodewith-qwen` | `@ai-sdk/openai-compatible` |
 | step | `aicodewith-step` | `@ai-sdk/openai-compatible` |
 
-编辑 `~/.config/opencode/opencode.json`，使用 `/models` 返回的真实值填充 `context`、`output`、`modalities` 和 `reasoning`。**如果模型的 `input_modalities` 包含 `"image"`，必须添加 `modalities` 字段声明视觉能力**；**如果模型的 `supports_reasoning` 为 `true`，必须添加 `"reasoning": true`**，否则 OpenCode 不会为该模型启用思考/推理模式：
+编辑 `~/.config/opencode/opencode.json`，使用 `/models` 返回的真实值填充模型配置。
+
+**模型字段映射**（`/models` API → OpenCode `opencode.json`）：
+
+| `/models` 返回字段 | OpenCode 模型字段 | 说明 |
+|---|---|---|
+| `context_window` | `limit.context` | 上下文窗口大小 |
+| `max_output_tokens` | `limit.output` | 最大输出 token 数 |
+| `input_modalities` | `modalities.input` | 输入模态，如 `["text", "image"]` |
+| `output_modalities` | `modalities.output` | 输出模态，如 `["text"]` |
+| `supports_reasoning` | `reasoning` | 是否支持推理/思考模式 |
+| `supports_temperature` | `temperature` | 是否支持 temperature 参数 |
+| `supports_tool_call` | `tool_call` | 是否支持工具调用 |
+| （根据 `input_modalities` 是否包含 `"image"`） | `attachment` | 是否启用附件/图片上传 UI |
+
+> **关键**：`attachment` 和 `modalities` 字段决定了 OpenCode UI 是否允许上传图片和文件。如果模型的 `input_modalities` 包含 `"image"`，则必须设置 `"attachment": true` 和 `"modalities": {"input": ["text", "image"], "output": ["text"]}`，否则 OpenCode 不会显示图片上传功能。
 
 ```json
 {
@@ -217,13 +237,19 @@ npm i -g opencode-ai
       "models": {
         "claude-sonnet-4-6": {
           "name": "Sonnet 4.6",
+          "attachment": true,
           "reasoning": true,
+          "temperature": true,
+          "tool_call": true,
           "modalities": { "input": ["text", "image"], "output": ["text"] },
           "limit": { "context": 200000, "output": 128000 }
         },
         "claude-opus-4-6": {
           "name": "Opus 4.6",
+          "attachment": true,
           "reasoning": true,
+          "temperature": true,
+          "tool_call": true,
           "modalities": { "input": ["text", "image"], "output": ["text"] },
           "limit": { "context": 200000, "output": 128000 }
         }
@@ -234,12 +260,16 @@ npm i -g opencode-ai
       "name": "AICodeWith OpenAI",
       "options": {
         "baseURL": "<BASE_URL>/v1",
-        "apiKey": "<用户的KEY>"
+        "apiKey": "<用户的KEY>",
+        "setCacheKey": true
       },
       "models": {
         "gpt-5.2": {
           "name": "GPT-5.2",
+          "attachment": true,
           "reasoning": true,
+          "temperature": true,
+          "tool_call": true,
           "modalities": { "input": ["text", "image"], "output": ["text"] },
           "limit": { "context": 200000, "output": 100000 }
         }
@@ -255,7 +285,10 @@ npm i -g opencode-ai
       "models": {
         "gemini-3-pro": {
           "name": "Gemini 3 Pro",
+          "attachment": true,
           "reasoning": true,
+          "temperature": true,
+          "tool_call": true,
           "modalities": { "input": ["text", "image"], "output": ["text"] },
           "limit": { "context": 1048576, "output": 65536 }
         }
@@ -271,7 +304,10 @@ npm i -g opencode-ai
       "models": {
         "deepseek-r1": {
           "name": "DeepSeek R1",
+          "attachment": false,
           "reasoning": true,
+          "temperature": true,
+          "tool_call": true,
           "limit": { "context": 131072, "output": 65536 }
         }
       }
