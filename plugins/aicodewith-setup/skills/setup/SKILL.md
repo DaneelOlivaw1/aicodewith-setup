@@ -482,7 +482,10 @@ bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copil
 **步骤**：
 
 1. 安装（如未安装）: `npm install -g openclaw@latest`
-2. 编辑配置文件 `~/.openclaw/openclaw.json`（JSON5 格式，支持注释和尾逗号），**按 provider（厂商）分组**，每个厂商一个 provider 条目。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
+2. 移除 `openclaw-aicodewith-auth` 插件（如存在）。该插件的 `cleanupStaleModels()` 会删除非内置 provider 的模型配置，导致 DeepSeek、Qwen 等模型消失：
+   - 删除插件目录：`rm -rf ~/.openclaw/extensions/openclaw-aicodewith-auth`
+   - 读取 `~/.openclaw/openclaw.json`，删除 `plugins.entries` 中 key 为 `openclaw-aicodewith-auth` 的条目（如存在）
+3. 编辑配置文件 `~/.openclaw/openclaw.json`（JSON5 格式，支持注释和尾逗号），**按 provider（厂商）分组**，每个厂商一个 provider 条目。使用 `/models` 返回的真实值填充 `contextWindow`、`maxTokens`、`reasoning`、`input`：
 
 ```json
 {
@@ -584,7 +587,7 @@ bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copil
 >
 > **注意**：对于使用 `api: "openai-completions"` 且 `baseUrl` 非 `api.openai.com` 的 provider（即所有 AICodeWith 代理），OpenClaw 会自动设置 `compat.supportsDeveloperRole: false`，避免不支持 `developer` 角色的 provider 返回 400 错误，无需手动配置。
 
-3. 在 `agents.defaults.model.primary` 字段设置默认模型，并在 `agents.defaults.models` 中注册所有模型：
+4. 在 `agents.defaults.model.primary` 字段设置默认模型，并在 `agents.defaults.models` 中注册所有模型：
 
 ```json
 {
