@@ -11,6 +11,7 @@
 | Gemini CLI | 环境变量 → .env | [gemini-cli](https://github.com/google-gemini/gemini-cli) |
 | OpenCode | 自定义 provider → opencode.json | [providers](https://opencode.ai/docs/providers/) |
 | OpenClaw | 自定义 provider → models.providers | [configuration-reference](https://docs.openclaw.ai/gateway/configuration-reference) |
+| Hermes Agent | 自定义 provider → config.yaml | [custom-providers](https://hermes-agent.nousresearch.com/docs/integrations/providers#custom--self-hosted-llm-providers) |
 
 ## 安装
 

@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 配置 AI 编程工具或调用大模型 API 连接 AICodeWith 中转服务。支持 Claude Code、Codex CLI、Gemini CLI、OpenCode、OpenClaw 等编程工具配置，以及通过 Python、JS 等语言直接调用 Claude、GPT、Gemini、DeepSeek 等大模型 API。当用户提到"配置"、"设置"、"连接"这些工具，或想用代码调用 AI、大模型、LLM API 时自动使用此 skill。
+description: 配置 AI 编程工具或调用大模型 API 连接 AICodeWith 中转服务。支持 Claude、Codex CLI、Gemini CLI、Droid、OpenClaw、Hermes Agent 等编程工具配置，以及通过 Python、JS 等语言直接调用 Claude、GPT、Gemini、DeepSeek 等大模型 API。当用户提到"配置"、"设置"、"连接"这些工具，或想用代码调用 AI、大模型、LLM API 时自动使用此 skill。
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [工具名称]
 ---
@@ -615,6 +615,92 @@ bunx oh-my-opencode install --no-tui --claude no --openai no --gemini no --copil
 > **注意**：不要用 `openclaw models set` 命令设置默认模型，该命令会重写 `agents.defaults.models`，导致其他模型从列表中消失。始终直接编辑配置文件。
 
 **测试**: `openclaw agent --local --to "+10000000000" --message "say hi" --json`
+
+---
+
+## Hermes Agent
+
+> 官方文档: https://hermes-agent.nousresearch.com/docs/integrations/providers#custom--self-hosted-llm-providers
+> Hermes 通过 `config.yaml` 的 `custom_providers` 列表配置自定义 API 端点。每个 provider 指定 `base_url`、`api_key` 和 `api_mode`。
+
+**前提**: Python 3.11+，已安装 Hermes Agent（`pip install hermes-agent` 或 git clone 安装）
+
+**适配器选择**（按模型的 `api_format` 字段）：
+
+| api_format | Hermes `api_mode` | `base_url` 格式 |
+|----------|--------|-------------|
+| `anthropic` | `anthropic_messages` | `<BASE_URL>`（不带 /v1） |
+| `openai-responses` | `chat_completions` | `<BASE_URL>/v1` |
+| `openai-completions` | `chat_completions` | `<BASE_URL>/v1` |
+| `gemini` | `chat_completions` | `<BASE_URL>/gemini_cli/v1beta` |
+
+> **注意**：
+> - `anthropic` 类型使用 `anthropic_messages`，base_url **不带** `/v1`（Anthropic SDK 自动拼接路径）
+> - `openai-responses` 和 `openai-completions` 统一使用 `chat_completions`（Hermes 内部统一通过 OpenAI SDK 处理）
+> - Gemini 类型也走 `chat_completions`，通过 OpenAI 兼容端点
+
+**步骤**：
+
+1. 确认安装：`hermes --version`（如未安装，参考 https://github.com/NousResearch/hermes-agent 安装）
+2. `mkdir -p ~/.hermes`
+3. 获取模型列表后，**按供应商（`provider` 字段）分组**，每个供应商建一个独立的 custom_provider 条目。编辑 `~/.hermes/config.yaml`：
+
+```yaml
+model:
+  default: <默认模型id，如 claude-opus-4-6>
+  provider: <默认provider名，如 aicodewith-claude>
+
+custom_providers:
+- name: aicodewith-claude
+  base_url: <BASE_URL>
+  api_key: <用户的KEY>
+  api_mode: anthropic_messages
+- name: aicodewith-openai
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+- name: aicodewith-gemini
+  base_url: <BASE_URL>/gemini_cli/v1beta
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+- name: aicodewith-deepseek
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+- name: aicodewith-qwen
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+- name: aicodewith-step
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+- name: aicodewith-bytedance
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+
+compression:
+  summary_model: <anthropic类中最便宜的模型，如 claude-haiku-4-5-20251001>
+```
+
+> **关键注意事项**：
+> - `model.default` 只写模型名（如 `claude-opus-4-6`），**不要**带 provider 前缀（如 ~~`aicodewith-claude/claude-opus-4-6`~~），否则会 400 报错"模型不存在"
+> - `model.provider` 必须与 `custom_providers` 中某个条目的 `name` 一致
+> - `compression.summary_model` 用于上下文压缩/摘要，建议选 anthropic 类中最便宜快速的模型
+> - 按 `/models` 接口返回的 `provider` 字段命名各 custom_provider（格式：`aicodewith-<provider值>`）
+> - 如果 `.env` 中有 `OPENAI_API_KEY` 或 `ANTHROPIC_API_KEY`，**建议删除**，避免 Hermes auto-detect 误走其他路径
+
+4. 清理 `~/.hermes/.env` 中可能冲突的变量（如存在）：
+   - 删除 `OPENAI_API_KEY`、`ANTHROPIC_API_KEY`、`OPENROUTER_API_KEY` 行（如存在）
+   - 这些变量会导致 Hermes 的辅助客户端（auxiliary client）绕过 custom_provider 直接走其他路径
+
+**测试**: `hermes chat -m "say hi"` 或通过已配置的 Telegram/飞书平台发送消息
+
+**切换模型**：在 Hermes 会话中使用 `/model custom:<provider名>:<模型名>` 切换，如：
+- `/model custom:aicodewith-claude:claude-sonnet-4-6`
+- `/model custom:aicodewith-openai:gpt-5.2`
+- `/model custom:aicodewith-deepseek:deepseek-r1`
 
 ---
 
