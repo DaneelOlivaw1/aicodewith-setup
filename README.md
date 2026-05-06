@@ -6,47 +6,29 @@
 
 | 工具 | 配置方式 | 官方文档 |
 |------|----------|----------|
-| Claude Code | 环境变量 → settings.json | [env-vars](https://code.claude.com/docs/en/env-vars) |
-| Codex CLI | 自定义 provider → config.yaml | [codex-cli](https://github.com/openai/codex/tree/main/codex-cli) |
-| Gemini CLI | 环境变量 → .env | [gemini-cli](https://github.com/google-gemini/gemini-cli) |
-| OpenCode | 自定义 provider → opencode.json | [providers](https://opencode.ai/docs/providers/) |
-| OpenClaw | 自定义 provider → models.providers | [configuration-reference](https://docs.openclaw.ai/gateway/configuration-reference) |
-| Hermes Agent | 自定义 provider → config.yaml | [custom-providers](https://hermes-agent.nousresearch.com/docs/integrations/providers#custom--self-hosted-llm-providers) |
+| Claude Code | 环境变量 + settings.json | https://code.claude.com/docs/en/env-vars |
+| Codex CLI | config.toml + codex login | https://github.com/openai/codex |
+| Gemini CLI | ~/.gemini/.env | https://github.com/google-gemini/gemini-cli |
+| OpenCode | opencode.json provider | https://opencode.ai/docs/providers/ |
+| OpenClaw | openclaw.json models.providers | https://docs.openclaw.ai |
+| Hermes Agent | config.yaml custom_providers | https://hermes-agent.nousresearch.com/docs |
+
+## 使用方法
+
+安装此插件后，在 AI 编程工具中触发 `setup` skill，按提示输入 API Key 即可完成配置。
+
+## 服务信息
+
+- 主线路: `https://api.aicodewith.com`
+- 备用线路: `https://api.with7.cn`
+- API Key 管理: https://api.aicodewith.com
 
 ## 安装
 
-在 Claude Code 中执行：
+```bash
+# Claude Code
+claude mcp add --transport http https://github.com/DaneelOlivaw1/aicodewith-setup
 
+# 或手动安装
+git clone https://github.com/DaneelOlivaw1/aicodewith-setup
 ```
-/plugin marketplace add DaneelOlivaw1/aicodewith-setup
-/plugin install aicodewith-setup@DaneelOlivaw1-aicodewith-setup
-```
-
-前提：系统需要安装 git。
-
-## 使用
-
-安装后，直接说：
-
-- "帮我配置 Claude Code"
-- "配置 Gemini CLI"
-- "把所有工具都配置好"
-
-或直接调用 `/aicodewith-setup:setup`
-
-## API Key
-
-登录 [AICodeWith](https://api.aicodewith.com) → 密钥管理 → 创建密钥
-
-## 线路
-
-| 线路 | 地址 | 说明 |
-|------|------|------|
-| 主线路 | `https://api.aicodewith.com` | 推荐，经 Cloudflare |
-| 备用线路 | `https://api.with7.cn` | 国内直连 |
-
-两条线路共享 API Key 和数据，可随时切换。
-
-## 工作原理
-
-Skill 内置了各工具的配置方法（基于各工具官方文档），不依赖外部服务。配置方法变更时更新 SKILL.md 即可。

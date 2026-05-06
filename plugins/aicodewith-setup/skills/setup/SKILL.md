@@ -361,9 +361,9 @@ npm i -g opencode-ai
   "models": {
     "mode": "merge",
     "providers": {
-      "aicodewith-claude": {
+      "aicodewith-anthropic": {
         "baseUrl": "<BASE_URL>",
-        "apiKey": "<用户的KEY>",
+        "apiKey": "***",
         "api": "anthropic-messages",
         "models": [
           {
@@ -450,7 +450,7 @@ npm i -g opencode-ai
 }
 ```
 
-> 按 `/models` 接口返回的 `provider` 字段命名各 provider（格式：`aicodewith-<provider值>`）。所有 `openai-completions` 类型的厂商（DeepSeek、Qwen、Kimi、GLM、MiniMax 等）均使用 `<BASE_URL>/v1` + `openai-completions`，只是模型列表不同。
+> 按 `/models` 接口返回的 `provider` 字段命名各 provider（格式：`aicodewith-<provider值>`）。anthropic → `aicodewith-anthropic`，openai → `aicodewith-openai`，gemini → `aicodewith-gemini`，deepseek → `aicodewith-deepseek`，glm → `aicodewith-glm`，kimi → `aicodewith-kimi`，minimax → `aicodewith-minimax`，qwen → `aicodewith-qwen`，step → `aicodewith-step`，bytedance → `aicodewith-bytedance`。所有 `openai-completions` 类型的厂商均使用 `<BASE_URL>/v1` + `openai-completions`，只是模型列表不同。
 >
 > **模型字段说明**：`reasoning`（boolean）、`input`（数组，如 `["text", "image"]`）、`contextWindow`（number）、`maxTokens`（number）为推荐字段。省略时 OpenClaw 使用默认值：`reasoning: false`、`input: ["text"]`、`contextWindow: 200000`、`maxTokens: 8192`。可选字段 `cost`（`{ input, output, cacheRead, cacheWrite }`）省略时默认为 0。
 >
@@ -463,14 +463,20 @@ npm i -g opencode-ai
   "agents": {
     "defaults": {
       "model": {
-        "primary": "aicodewith-claude/<最强claude模型>",
+        "primary": "aicodewith-anthropic/<最强claude模型>",
         "fallbacks": ["aicodewith-openai/<备选模型>"]
       },
       "models": {
-        "aicodewith-claude/<模型名>": {},
+        "aicodewith-anthropic/<模型名>": {},
         "aicodewith-openai/<模型名>": {},
         "aicodewith-gemini/<模型名>": {},
-        "aicodewith-deepseek/<模型名>": {}
+        "aicodewith-deepseek/<模型名>": {},
+        "aicodewith-glm/<模型名>": {},
+        "aicodewith-kimi/<模型名>": {},
+        "aicodewith-minimax/<模型名>": {},
+        "aicodewith-qwen/<模型名>": {},
+        "aicodewith-step/<模型名>": {},
+        "aicodewith-bytedance/<模型名>": {}
       }
     }
   }
@@ -516,41 +522,87 @@ npm i -g opencode-ai
 
 ```yaml
 model:
-  default: <默认模型id，如 claude-opus-4-6>
-  provider: <默认provider名，如 aicodewith-claude>
+  default: <默认模型id，如 claude-opus-4-7>
+  provider: <默认provider名，如 aicodewith-anthropic>
 
 custom_providers:
-- name: aicodewith-claude
+  # Anthropic — api_mode: anthropic_messages，base_url 不带 /v1
+- name: aicodewith-anthropic
   base_url: <BASE_URL>
   api_key: <用户的KEY>
   api_mode: anthropic_messages
+  # 模型: claude-haiku-4-5-20251001, claude-opus-4-6, claude-opus-4-6[1m],
+  #        claude-sonnet-4-6, claude-sonnet-4-6[1m], claude-opus-4-7, claude-opus-4-7[1m]
+
+  # OpenAI — api_mode: chat_completions，base_url 带 /v1
 - name: aicodewith-openai
   base_url: <BASE_URL>/v1
   api_key: <用户的KEY>
   api_mode: chat_completions
+  # 模型: gpt-5.2, gpt-5.3-codex, gpt-5.4, gpt-5.5
+  # 注: gpt-image-2-beta 为图片生成模型，不适合 chat_completions，跳过
+
+  # Gemini — api_mode: chat_completions，base_url 带 /gemini_cli/v1beta
 - name: aicodewith-gemini
   base_url: <BASE_URL>/gemini_cli/v1beta
   api_key: <用户的KEY>
   api_mode: chat_completions
+  # 模型: gemini-2.5-pro, gemini-3-pro-preview, gemini-3.1-pro-preview, gemini-3-pro-image-preview
+
+  # DeepSeek — api_mode: chat_completions
 - name: aicodewith-deepseek
   base_url: <BASE_URL>/v1
   api_key: <用户的KEY>
   api_mode: chat_completions
+  # 模型: deepseek-v3.2, deepseek-r1-0528, deepseek-v4-flash, deepseek-v4-pro
+
+  # GLM — api_mode: chat_completions
+- name: aicodewith-glm
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+  # 模型: glm-5, glm-5.1, glm-4.7, glm-4.6
+
+  # Kimi — api_mode: chat_completions
+- name: aicodewith-kimi
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+  # 模型: kimi-k2.5, kimi-k2, kimi-k2-thinking
+
+  # MiniMax — api_mode: chat_completions
+- name: aicodewith-minimax
+  base_url: <BASE_URL>/v1
+  api_key: <用户的KEY>
+  api_mode: chat_completions
+  # 模型: mimo-v2-flash, minimax-m2.1, minimax-m2.5, minimax-m2.7
+
+  # Qwen — api_mode: chat_completions
 - name: aicodewith-qwen
   base_url: <BASE_URL>/v1
   api_key: <用户的KEY>
   api_mode: chat_completions
+  # 模型: qwen3.5-397b-a17b, qwen3-coder-next, qwen3-coder, qwen3-next-80b-a3b-instruct,
+  #        qwen3-next-80b-a3b-thinking, qwen3-30b-a3b-instruct-2507, qwen3-30b-a3b-thinking-2507,
+  #        qwen3-32b, qwen3-14b, qwen3-235b-a22b-instruct-2507, qwen3-235b-a22b-thinking-2507,
+  #        qwen3-235b-a22b, qwq-32b, qwen2.5-72b-instruct, qwen2.5-32b-instruct, qwen2.5-7b-instruct
+
+  # Step — api_mode: chat_completions
 - name: aicodewith-step
   base_url: <BASE_URL>/v1
   api_key: <用户的KEY>
   api_mode: chat_completions
+  # 模型: longcat-flash-chat
+
+  # ByteDance — api_mode: chat_completions
 - name: aicodewith-bytedance
   base_url: <BASE_URL>/v1
   api_key: <用户的KEY>
   api_mode: chat_completions
+  # 模型: seed-oss-36b-instruct
 
 compression:
-  summary_model: <anthropic类中最便宜的模型，如 claude-haiku-4-5-20251001>
+  summary_model: claude-haiku-4-5-20251001
 ```
 
 > **关键注意事项**：
@@ -567,9 +619,15 @@ compression:
 **测试**: `hermes chat -m "say hi"` 或通过已配置的 Telegram/飞书平台发送消息
 
 **切换模型**：在 Hermes 会话中使用 `/model custom:<provider名>:<模型名>` 切换，如：
-- `/model custom:aicodewith-claude:claude-sonnet-4-6`
-- `/model custom:aicodewith-openai:gpt-5.2`
-- `/model custom:aicodewith-deepseek:deepseek-r1`
+- `/model custom:aicodewith-anthropic:claude-sonnet-4-6`
+- `/model custom:aicodewith-anthropic:claude-opus-4-7`
+- `/model custom:aicodewith-openai:gpt-5.5`
+- `/model custom:aicodewith-gemini:gemini-3.1-pro-preview`
+- `/model custom:aicodewith-deepseek:deepseek-r1-0528`
+- `/model custom:aicodewith-glm:glm-5.1`
+- `/model custom:aicodewith-kimi:kimi-k2.5`
+- `/model custom:aicodewith-minimax:minimax-m2.7`
+- `/model custom:aicodewith-qwen:qwen3-coder-next`
 
 ---
 
